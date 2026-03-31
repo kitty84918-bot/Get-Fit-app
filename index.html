@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人營養與體重月曆 - 雲端完整版</title>
+    <title>🍎個人營養與體重月曆 - 雲端完整版</title>
     <style>
         :root { 
             --primary-color: #a64d4d; 
@@ -17,37 +17,47 @@
             --success-color: #2e7d32;
             --danger-color: #c62828;
             --weight-color: #5c6bc0;
+            --workout-color: #e67e22;
         }
-        body { background-color: var(--bg-color); font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { background-color: var(--bg-color); font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 登入畫面覆蓋層 */
-        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(253, 245, 245, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
-        .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 350px; text-align: center; border: 2px solid var(--border-color); }
+        /* 頂部分頁導航列 */
+        .top-nav { background: white; padding: 10px 20px; border-bottom: 2px solid var(--border-color); display: flex; gap: 10px; z-index: 100; flex-shrink: 0; position: sticky; top: 0; }
+        .tab-btn { padding: 10px 25px; border: none; background: #f0f4f8; border-radius: 8px; cursor: pointer; font-weight: bold; color: #666; font-size: 15px; transition: 0.3s; }
+        .tab-btn:hover { background: #e2e8f0; }
+        .tab-btn.active { background: var(--primary-color); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .tab-btn.workout-active { background: var(--workout-color); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        /* 分頁內容容器 */
+        .tab-content { display: flex; flex-direction: row; flex: 1; overflow: hidden; width: 100%; }
+        
+        /* --- 登入畫面 --- */
+        #authOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(253, 245, 245, 0.98); display: flex; justify-content: center; align-items: center; z-index: 1000; overflow-y: auto; padding: 20px 0; }
+        .auth-container { display: flex; flex-direction: row; align-items: stretch; justify-content: center; gap: 40px; width: 95%; max-width: 1000px; }
+        .auth-logo { flex: 1; width: 100%; max-width: 550px; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .auth-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border: 2px solid var(--border-color); box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; }
         .auth-box input { margin-bottom: 15px; }
         .auth-box button { margin-bottom: 10px; }
 
-        /* 左側月曆 */
-        .calendar-section { flex: 2; padding: 20px; display: flex; flex-direction: column; }
+        /* --- 飲食月曆分頁樣式 --- */
+        .calendar-section { flex: 2; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: var(--primary-color); }
         .manage-toggle-btn { background: var(--manage-primary); color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 14px; cursor: pointer; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
         
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; flex-grow: 1; background: white; border-radius: 15px; padding: 15px; border: 2px solid var(--border-color); }
         .weekday { text-align: center; font-weight: bold; color: var(--accent-color); padding: 5px 0; border-bottom: 1px solid #eee; }
-        .day-cell { border: 1px solid #f9f0f0; border-radius: 10px; padding: 8px; min-height: 85px; display: flex; flex-direction: column; position: relative; background: #fff; cursor: pointer; }
+        .day-cell { border: 1px solid #f9f0f0; border-radius: 10px; padding: 6px; min-height: auto; display: flex; flex-direction: column; position: relative; background: #fff; cursor: pointer; box-sizing: border-box; }
         .day-cell.today { border: 2px solid var(--primary-color); background: #fffafb; }
         .day-cell.editing-target { border: 2px dashed var(--edit-color); background: #f0f7ff; }
         .date-num { font-size: 14px; font-weight: bold; color: #888; }
-        
-        .day-data { font-size: 11px; line-height: 1.4; margin-top: 5px; flex-grow: 1; }
+        .day-data { font-size: 10px; line-height: 1.2; margin: 4px 0; flex-grow: 1; display: flex; flex-direction: column; gap: 2px; }
         .day-data .cal { color: #d32f2f; font-weight: bold; }
         .day-data .pro { color: #388e3c; font-weight: bold; }
         .day-data .weight { color: var(--weight-color); font-weight: bold; margin-top: 2px; }
-        
         .cell-btns { display: flex; gap: 4px; margin-top: auto; opacity: 0.1; transition: 0.3s; }
         .day-cell:hover .cell-btns { opacity: 1; }
         .mini-btn { flex: 1; font-size: 10px; padding: 2px 0; border-radius: 4px; border: none; color: white; cursor: pointer; }
 
-        /* 右側輸入欄 */
         .input-section { flex: 1; background: white; border-left: 2px solid var(--border-color); padding: 25px; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.03); overflow-y: auto; transition: 0.3s; }
         .input-section.manage-mode { background-color: var(--manage-bg); border-left-color: var(--manage-border); }
 
@@ -57,7 +67,6 @@
         .tag-manage { background: #dbeafe; color: var(--manage-primary); }
 
         h2 { margin: 0 0 15px 0; font-size: 20px; color: var(--primary-color); }
-
         .input-group { margin-bottom: 12px; }
         label { display: block; color: #8e6d6d; font-size: 13px; margin-bottom: 5px; font-weight: bold; }
         select, input { width: 100%; padding: 10px; border: 1.5px solid #ebdada; border-radius: 8px; box-sizing: border-box; font-size: 14px; background: white; }
@@ -66,154 +75,208 @@
         .add-btn { background-color: var(--primary-color); color: white; margin-bottom: 8px; }
         .save-menu-btn { background-color: var(--manage-primary); color: white; }
         
-        /* 目標與體重顯示區 */
         .target-box { background: #fdf8f8; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--border-color); }
         .target-box button { padding: 8px; font-size: 12px; margin-top: 5px; background: var(--accent-color); color: white; }
-        
         .weight-box { background: #f0f4f8; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #c5d0e6; }
-        
         .total-display { background: #fffafa; padding: 15px; border-radius: 10px; margin-top: 15px; text-align: center; border: 1px dashed var(--border-color); }
         .stat-row { display: flex; justify-content: space-around; margin-top: 10px; }
         .stat-col { display: flex; flex-direction: column; align-items: center; }
         .stat-val { font-size: 20px; font-weight: bold; color: var(--primary-color); }
         .stat-rem { font-size: 12px; font-weight: bold; margin-top: 3px; }
-
         .settle-btn { background-color: var(--accent-color); color: white; margin-top: 10px; }
         
-        /* 清單列表樣式 */
         .menu-list-container { margin-top: 15px; border-top: 1px solid #d1e3f3; padding-top: 15px; }
         .menu-group-title { font-size: 13px; color: var(--manage-primary); font-weight: bold; background: #e1efff; padding: 5px 12px; border-radius: 5px; margin-top: 10px; }
         .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #e1efff; font-size: 13px; background: white; margin: 2px 0; border-radius: 4px; }
-        
-        /* 今日明細樣式 */
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: 13px; }
 
-        /* 手機版響應式 */
+        /* --- 運動表現分頁樣式 --- */
+        .workout-sidebar { flex: 1; max-width: 300px; background: white; border-right: 2px solid #e2e8f0; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .workout-main { flex: 3; padding: 25px; overflow-y: auto; background: #fcfcfc; }
+        
+        .prog-card { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center;}
+        .prog-card:hover { border-color: var(--workout-color); }
+        .prog-card.active { border: 2px solid var(--workout-color); background: #fff7ed; }
+        .prog-title { font-weight: bold; color: #334155; font-size: 15px;}
+        
+        .part-container { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .part-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 15px; }
+        .part-header h3 { margin: 0; color: #475569; font-size: 18px; }
+        
+        .ex-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; flex-wrap: wrap; }
+        .ex-row input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white; }
+        .ex-row input:focus { border-color: var(--workout-color); outline: none; }
+        .ex-name { flex: 2; min-width: 120px; }
+        .ex-num { flex: 1; min-width: 60px; max-width: 90px; }
+        .ex-label { font-size: 12px; color: #64748b; margin-right: 4px; font-weight: bold;}
+        
+        .btn-icon { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; padding: 4px; opacity: 0.7; transition: 0.2s; }
+        .btn-icon:hover { opacity: 1; transform: scale(1.1); }
+        
+        .add-part-btn { background: #f1f5f9; color: #475569; border: 1px dashed #cbd5e1; margin-top: 10px; }
+        .add-submit-btn { background: var(--workout-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
+        .add-submit-btn:hover { background: #d35400; }
+
+        /* --- 手機版響應式修正 --- */
         @media (max-width: 900px) { 
-            body { flex-direction: column; overflow-y: auto; height: auto; } 
+            body { height: auto; overflow-y: auto; }
+            
+            .auth-container { flex-direction: column; gap: 20px; align-items: center; width: 90%; }
+            .auth-logo, .auth-box { width: 100%; max-width: 500px; }
+
+            .tab-content { flex-direction: column; height: auto; overflow: visible; }
             .input-section { order: 1; flex: none; width: 100%; box-sizing: border-box; border-left: none; border-bottom: 2px solid var(--border-color); overflow-y: visible; }
             .calendar-section { order: 2; flex: none; height: auto; width: 100%; box-sizing: border-box; padding-bottom: 40px; } 
-            .calendar-grid { padding: 10px; gap: 4px; }
-            .day-cell { padding: 4px; min-height: 75px; }
-            .cell-btns { opacity: 1; flex-direction: column; gap: 2px; }
+            .calendar-grid { padding: 8px; gap: 4px; grid-template-columns: repeat(7, 1fr); }
+            .day-cell { padding: 4px; min-height: 95px; }
+            .cell-btns { opacity: 1; flex-direction: row; gap: 2px; margin-top: 4px; }
+            .mini-btn { padding: 4px 0; font-size: 9px; }
+
+            .workout-main { order: 1; padding: 15px; }
+            .workout-sidebar { order: 2; max-width: none; border-right: none; border-top: 2px solid #e2e8f0; }
+            
+            .ex-row { flex-direction: column; align-items: stretch; }
+            .ex-row > div { display: flex; align-items: center; justify-content: space-between; }
+            .ex-num { max-width: none; width: 60%; }
+            .add-submit-btn { width: 100%; margin-top: 8px; padding: 12px; } /* 手機版按鈕加寬加高 */
         }
     </style>
 </head>
 <body>
 
+<div class="top-nav" id="topNav" style="display: none;">
+    <button class="tab-btn active" id="tabBtnNutrition" onclick="switchTab('nutrition')">🍎 飲食與體重</button>
+    <button class="tab-btn" id="tabBtnWorkout" onclick="switchTab('workout')">💪 運動表現</button>
+</div>
+
 <div id="authOverlay">
-    <div class="auth-box">
-        <h2 style="color: var(--primary-color);">🍎 雲端營養月曆</h2>
-        <input type="email" id="authEmail" placeholder="電子郵件">
-        <input type="password" id="authPassword" placeholder="密碼 (至少6碼)">
-        <button style="background: var(--primary-color); color: white;" onclick="handleLogin()">登入</button>
-        <button style="background: white; color: var(--primary-color); border: 2px solid var(--primary-color);" onclick="handleRegister()">註冊新帳號</button>
-        <div id="authMsg" style="color: red; font-size: 12px; margin-top: 10px;"></div>
+    <div class="auth-container">
+        <img src="https://res.cloudinary.com/dsgn3pwep/image/upload/v1774851002/1x1_jlfbmm.png" alt="App Logo" class="auth-logo">
+        <div class="auth-box">
+            <h2 style="color: var(--primary-color); margin-top: 0;">🍎 雲端健康日誌</h2>
+            <input type="email" id="authEmail" placeholder="電子郵件">
+            <input type="password" id="authPassword" placeholder="密碼 (至少6碼)">
+            <button style="background: var(--primary-color); color: white;" onclick="handleLogin()">登入</button>
+            <button style="background: white; color: var(--primary-color); border: 2px solid var(--primary-color);" onclick="handleRegister()">註冊新帳號</button>
+            <div id="authMsg" style="color: red; font-size: 12px; margin-top: 10px;"></div>
+        </div>
     </div>
 </div>
 
-<div class="calendar-section">
-    <button class="manage-toggle-btn" onclick="toggleMode('manage')">🍴 管理自訂菜單</button>
-    
-    <div class="calendar-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <button onclick="changeMonth(-1)" style="padding: 5px 15px; width: auto; background: var(--manage-bg); color: var(--edit-color); border: 1px solid var(--manage-border);">◀</button>
-            <h3 id="monthTitle" style="margin: 0; min-width: 110px; text-align: center;">月曆</h3>
-            <button onclick="changeMonth(1)" style="padding: 5px 15px; width: auto; background: var(--manage-bg); color: var(--edit-color); border: 1px solid var(--manage-border);">▶</button>
+<div id="nutritionTab" class="tab-content">
+    <div class="calendar-section">
+        <button class="manage-toggle-btn" onclick="toggleMode('manage')">🍴 管理自訂菜單</button>
+        <div class="calendar-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button onclick="changeMonth(-1)" style="padding: 5px 15px; width: auto; background: var(--manage-bg); color: var(--edit-color); border: 1px solid var(--manage-border);">◀</button>
+                <h3 id="monthTitle" style="margin: 0; min-width: 110px; text-align: center;">月曆</h3>
+                <button onclick="changeMonth(1)" style="padding: 5px 15px; width: auto; background: var(--manage-bg); color: var(--edit-color); border: 1px solid var(--manage-border);">▶</button>
+            </div>
+            <div>
+                <span id="userEmailDisplay" style="font-size: 12px; margin-right: 10px; color: #666;"></span>
+                <button onclick="handleLogout()" style="width: auto; padding: 5px 10px; font-size: 12px; background: #888; color: white;">登出</button>
+            </div>
         </div>
-        <div>
-            <span id="userEmailDisplay" style="font-size: 12px; margin-right: 10px; color: #666;"></span>
-            <button onclick="handleLogout()" style="width: auto; padding: 5px 10px; font-size: 12px; background: #888; color: white;">登出</button>
-        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
     </div>
-    
-    <div class="calendar-grid" id="calendarGrid"></div>
-</div>
 
-<div class="input-section" id="rightPanel">
-    <div id="recordUI">
-        <div class="header-row" style="display:flex; justify-content:space-between;">
-            <div id="statusTag" class="status-tag tag-today">今日紀錄</div>
-            <button id="cancelEditBtn" style="display:none; border:none; background:none; color:#999; cursor:pointer;" onclick="switchToDate(todayDateStr)">✖ 取消補登</button>
-        </div>
-        
-        <div class="target-box">
-            <div class="row" style="margin-bottom:0;">
-                <div><label>🎯 TDEE 目標</label><input type="number" id="setTDEE" placeholder="例: 2000"></div>
-                <div><label>💪 蛋白質目標</label><input type="number" id="setPro" placeholder="例: 120"></div>
+    <div class="input-section" id="rightPanel">
+        <div id="recordUI">
+            <div class="header-row" style="display:flex; justify-content:space-between;">
+                <div id="statusTag" class="status-tag tag-today">今日紀錄</div>
+                <button id="cancelEditBtn" style="display:none; border:none; background:none; color:#999; cursor:pointer;" onclick="switchToDate(todayDateStr)">✖ 取消補登</button>
             </div>
-            <button onclick="saveTargets()">💾 更新個人目標</button>
-        </div>
-
-        <div class="weight-box">
-            <div class="row" style="margin-bottom:0; align-items: center;">
-                <div style="flex:1;">
-                    <label style="color:var(--weight-color)">⚖️ 紀錄體重 (kg)</label>
-                    <input type="number" id="dailyWeight" step="0.1" placeholder="例: 65.5">
+            
+            <div class="target-box">
+                <div class="row" style="margin-bottom:0;">
+                    <div><label>🎯 TDEE 目標</label><input type="number" id="setTDEE" placeholder="例: 2000"></div>
+                    <div><label>💪 蛋白質目標</label><input type="number" id="setPro" placeholder="例: 120"></div>
                 </div>
-                <div style="width: 80px;">
-                    <button onclick="saveWeight()" style="background:var(--weight-color); color:white; margin-top: 20px; padding: 10px;">儲存</button>
+                <button onclick="saveTargets()">💾 更新個人目標</button>
+            </div>
+
+            <div class="weight-box">
+                <div class="row" style="margin-bottom:0; align-items: center;">
+                    <div style="flex:1;">
+                        <label style="color:var(--weight-color)">⚖️ 紀錄體重 (kg)</label>
+                        <input type="number" id="dailyWeight" step="0.1" placeholder="例: 65.5">
+                    </div>
+                    <div style="width: 80px;">
+                        <button onclick="saveWeight()" style="background:var(--weight-color); color:white; margin-top: 20px; padding: 10px;">儲存</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <h2 id="inputTitle">🍎 新增飲食紀錄</h2>
-        <div class="input-group">
-            <label>快速選擇菜單</label>
+            <h2 id="inputTitle">🍎 新增飲食紀錄</h2>
+            <div class="input-group">
+                <label>快速選擇菜單</label>
+                <div class="row">
+                    <select id="categorySelect" onchange="updateFoodSubSelect()"></select>
+                    <select id="foodSubSelect" onchange="autoFillFromSub()"></select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>食物名稱 (可手動輸入)</label>
+                <input type="text" id="recName" placeholder="例如：拿鐵">
+            </div>
             <div class="row">
-                <select id="categorySelect" onchange="updateFoodSubSelect()"></select>
-                <select id="foodSubSelect" onchange="autoFillFromSub()"></select>
+                <div><label>熱量 (kcal)</label><input type="number" id="recCal" placeholder="0"></div>
+                <div><label>蛋白質 (g)</label><input type="number" id="recPro" placeholder="0"></div>
             </div>
-        </div>
-        
-        <div class="input-group">
-            <label>食物名稱 (可手動輸入)</label>
-            <input type="text" id="recName" placeholder="例如：拿鐵">
-        </div>
-        <div class="row">
-            <div><label>熱量 (kcal)</label><input type="number" id="recCal" placeholder="0"></div>
-            <div><label>蛋白質 (g)</label><input type="number" id="recPro" placeholder="0"></div>
-        </div>
-        
-        <button class="add-btn" id="addBtnRec" onclick="addEntryToLog()">加入今日累計 ＋</button>
-        
-        <div class="total-display">
-            <div style="font-size: 14px; color: #666;">當前累計總合</div>
-            <div class="stat-row">
-                <div class="stat-col">
-                    <span class="stat-val" id="curCal">0 <small>kcal</small></span>
-                    <span class="stat-rem" id="remCal"></span>
-                </div>
-                <div class="stat-col">
-                    <span class="stat-val" id="curPro">0 <small>g</small></span>
-                    <span class="stat-rem" id="remPro"></span>
+            <button class="add-btn" id="addBtnRec" onclick="addEntryToLog()">加入今日累計 ＋</button>
+            
+            <div class="total-display">
+                <div style="font-size: 14px; color: #666;">當前累計總合</div>
+                <div class="stat-row">
+                    <div class="stat-col">
+                        <span class="stat-val" id="curCal">0 <small>kcal</small></span>
+                        <span class="stat-rem" id="remCal"></span>
+                    </div>
+                    <div class="stat-col">
+                        <span class="stat-val" id="curPro">0 <small>g</small></span>
+                        <span class="stat-rem" id="remPro"></span>
+                    </div>
                 </div>
             </div>
+            <button class="settle-btn" onclick="settleToCalendar()">同步至月曆 💾</button>
+            <div id="todayFoodList" style="margin-top:15px; font-size:12px; color:#666; border-top:1px solid #eee; padding-top:10px;"></div>
         </div>
-        
-        <button class="settle-btn" onclick="settleToCalendar()">同步至月曆 💾</button>
-        <div id="todayFoodList" style="margin-top:15px; font-size:12px; color:#666; border-top:1px solid #eee; padding-top:10px;"></div>
-    </div>
 
-    <div id="manageUI" style="display:none;">
-        <div class="status-tag tag-manage">菜單管理模式</div>
-        <h2>🍴 建立食物清單</h2>
-        <div class="input-group">
-            <label>1. 群組名稱</label>
-            <input type="text" id="mGroup" list="mGroups" placeholder="例如：早餐">
-            <datalist id="mGroups"></datalist>
+        <div id="manageUI" style="display:none;">
+            <div class="status-tag tag-manage">菜單管理模式</div>
+            <h2>🍴 建立食物清單</h2>
+            <div class="input-group">
+                <label>1. 群組名稱</label>
+                <input type="text" id="mGroup" list="mGroups" placeholder="例如：早餐">
+                <datalist id="mGroups"></datalist>
+            </div>
+            <div class="input-group">
+                <label>2. 食物名稱</label>
+                <input type="text" id="mName" placeholder="例如：三明治">
+            </div>
+            <div class="row">
+                <div><label>熱量</label><input type="number" id="mCal" placeholder="0"></div>
+                <div><label>蛋白質</label><input type="number" id="mPro" placeholder="0"></div>
+            </div>
+            <button class="save-menu-btn" onclick="saveToMenu()">儲存到清單 ＋</button>
+            <button style="margin-top:10px; background:#e2e8f0; color:#475569;" onclick="toggleMode('record')">← 返回紀錄模式</button>
+            <div class="menu-list-container" id="menuListView"></div>
         </div>
-        <div class="input-group">
-            <label>2. 食物名稱</label>
-            <input type="text" id="mName" placeholder="例如：三明治">
+    </div>
+</div>
+
+<div id="workoutTab" class="tab-content" style="display: none;">
+    <div class="workout-sidebar">
+        <h2 style="color: var(--workout-color); font-size: 18px; margin-top: 0;">📋 訓練課表</h2>
+        <button style="background: var(--workout-color); color: white; margin-bottom: 15px;" onclick="addWorkoutProgram()">＋ 新增課表</button>
+        <div id="programList">
+            </div>
+    </div>
+    
+    <div class="workout-main" id="workoutDetail">
+        <div style="text-align: center; color: #94a3b8; margin-top: 50px;">
+            請由左側 (或下方) 選擇一個訓練課表開始紀錄
         </div>
-        <div class="row">
-            <div><label>熱量</label><input type="number" id="mCal" placeholder="0"></div>
-            <div><label>蛋白質</label><input type="number" id="mPro" placeholder="0"></div>
-        </div>
-        <button class="save-menu-btn" onclick="saveToMenu()">儲存到清單 ＋</button>
-        <button style="margin-top:10px; background:#e2e8f0; color:#475569;" onclick="toggleMode('record')">← 返回紀錄模式</button>
-        <div class="menu-list-container" id="menuListView"></div>
     </div>
 </div>
 
@@ -236,31 +299,45 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 全域變數
     let currentUserUID = null;
     let myTargets = { tdee: 0, pro: 0 };
     let allDailyData = {};
     let monthData = {};
     let customMenu = {}; 
-    
-    // 時間變數 (解鎖 currentYear 與 currentMonth 讓切換月份生效)
+    let workoutPrograms = [];
+    let currentProgramIdx = -1;
+
     const now = new Date();
     let currentYear = now.getFullYear();
     let currentMonth = now.getMonth();
     const todayDateStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
     let editingDate = todayDateStr;
 
-    // --- Firebase 登入與資料庫邏輯 ---
+    window.switchTab = (tab) => {
+        document.getElementById('nutritionTab').style.display = tab === 'nutrition' ? 'flex' : 'none';
+        document.getElementById('workoutTab').style.display = tab === 'workout' ? 'flex' : 'none';
+        
+        document.getElementById('tabBtnNutrition').className = tab === 'nutrition' ? 'tab-btn active' : 'tab-btn';
+        document.getElementById('tabBtnWorkout').className = tab === 'workout' ? 'tab-btn workout-active' : 'tab-btn';
+        
+        if (tab === 'workout') {
+            renderProgramList();
+            renderProgramDetail();
+        }
+    };
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUserUID = user.uid;
             document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('topNav').style.display = 'flex'; 
             document.getElementById('userEmailDisplay').innerText = user.email;
             await loadUserDataFromDB();
             initAppUI();
         } else {
             currentUserUID = null;
             document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('topNav').style.display = 'none';
         }
     });
 
@@ -280,7 +357,6 @@
 
     window.handleLogout = () => signOut(auth);
 
-    // 讀取與儲存雲端資料
     async function loadUserDataFromDB() {
         if (!currentUserUID) return;
         const docSnap = await getDoc(doc(db, "users", currentUserUID));
@@ -290,8 +366,9 @@
             allDailyData = data.allDailyData || {};
             monthData = data.monthData || {};
             customMenu = data.customMenu || {};
+            workoutPrograms = data.workoutPrograms || [];
         } else {
-            myTargets = { tdee: 0, pro: 0 }; allDailyData = {}; monthData = {}; customMenu = {};
+            myTargets = { tdee: 0, pro: 0 }; allDailyData = {}; monthData = {}; customMenu = {}; workoutPrograms = [];
         }
         document.getElementById('setTDEE').value = myTargets.tdee || '';
         document.getElementById('setPro').value = myTargets.pro || '';
@@ -303,11 +380,196 @@
             targets: myTargets,
             allDailyData: allDailyData,
             monthData: monthData,
-            customMenu: customMenu
+            customMenu: customMenu,
+            workoutPrograms: workoutPrograms
         });
     }
 
-    // --- 應用程式 UI 邏輯 ---
+    window.addWorkoutProgram = async () => {
+        const name = prompt("請輸入新訓練課表名稱：\n(例如：胸背肩腿 - 推日)");
+        if (!name || name.trim() === "") return;
+        workoutPrograms.push({ name: name.trim(), parts: [] });
+        currentProgramIdx = workoutPrograms.length - 1;
+        await syncToDB();
+        renderProgramList();
+        renderProgramDetail();
+    };
+
+    window.deleteProgram = async (idx, event) => {
+        event.stopPropagation();
+        if (confirm(`確定要刪除課表「${workoutPrograms[idx].name}」嗎？`)) {
+            workoutPrograms.splice(idx, 1);
+            if (currentProgramIdx === idx) currentProgramIdx = -1;
+            else if (currentProgramIdx > idx) currentProgramIdx--;
+            await syncToDB();
+            renderProgramList();
+            renderProgramDetail();
+        }
+    };
+
+    window.selectProgram = (idx) => {
+        currentProgramIdx = idx;
+        renderProgramList();
+        renderProgramDetail();
+        
+        if (window.innerWidth <= 900) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    function renderProgramList() {
+        const listDiv = document.getElementById('programList');
+        listDiv.innerHTML = '';
+        workoutPrograms.forEach((prog, idx) => {
+            listDiv.innerHTML += `
+                <div class="prog-card ${idx === currentProgramIdx ? 'active' : ''}" onclick="selectProgram(${idx})">
+                    <span class="prog-title">${prog.name}</span>
+                    <button class="btn-icon" onclick="deleteProgram(${idx}, event)">🗑️</button>
+                </div>
+            `;
+        });
+    }
+
+    window.addPart = async () => {
+        if (currentProgramIdx === -1) return;
+        const partName = prompt("請輸入訓練部位：\n(例如：胸部、背部、肩部、腿部)");
+        if (!partName || partName.trim() === "") return;
+        workoutPrograms[currentProgramIdx].parts.push({ name: partName.trim(), exercises: [] });
+        await syncToDB();
+        renderProgramDetail();
+    };
+
+    window.deletePart = async (ptIdx) => {
+        if (confirm(`確定要刪除部位「${workoutPrograms[currentProgramIdx].parts[ptIdx].name}」及其內含的所有項目嗎？`)) {
+            workoutPrograms[currentProgramIdx].parts.splice(ptIdx, 1);
+            await syncToDB();
+            renderProgramDetail();
+        }
+    };
+
+    window.deleteExercise = async (ptIdx, exIdx) => {
+        const exName = workoutPrograms[currentProgramIdx].parts[ptIdx].exercises[exIdx].name || "此項目";
+        if (confirm(`確定要刪除「${exName}」嗎？`)) {
+            workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.splice(exIdx, 1);
+            await syncToDB();
+            renderProgramDetail();
+        }
+    };
+
+    // 原有的即時更新功能保留，讓舊項目可以直接編輯
+    window.updateExField = (ptIdx, exIdx, field, element) => {
+        let val = element.value;
+        if (field !== 'name') {
+            val = val === '' ? '' : parseInt(val, 10);
+            if (isNaN(val)) val = '';
+            element.value = val; 
+        }
+        workoutPrograms[currentProgramIdx].parts[ptIdx].exercises[exIdx][field] = val;
+        syncToDB(); 
+    };
+
+    // 新增：處理先輸入資料後再加入的按鈕事件
+    window.submitNewExercise = async (ptIdx) => {
+        const nameEl = document.getElementById(`newExName_${ptIdx}`);
+        const weightEl = document.getElementById(`newExWeight_${ptIdx}`);
+        const rmEl = document.getElementById(`newExRm_${ptIdx}`);
+        const setsEl = document.getElementById(`newExSets_${ptIdx}`);
+        
+        const name = nameEl.value.trim();
+        if (!name) {
+            alert("請輸入項目名稱！");
+            return;
+        }
+        
+        let weight = weightEl.value === '' ? '' : parseInt(weightEl.value, 10);
+        if (isNaN(weight)) weight = '';
+        
+        let rm = rmEl.value === '' ? '' : parseInt(rmEl.value, 10);
+        if (isNaN(rm)) rm = '';
+        
+        let sets = setsEl.value === '' ? '' : parseInt(setsEl.value, 10);
+        if (isNaN(sets)) sets = '';
+
+        workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.push({ name, weight, rm, sets });
+        await syncToDB();
+        renderProgramDetail(); // 重新渲染，清空輸入框並顯示新項目
+    };
+
+    function renderProgramDetail() {
+        const detailDiv = document.getElementById('workoutDetail');
+        if (currentProgramIdx === -1 || !workoutPrograms[currentProgramIdx]) {
+            detailDiv.innerHTML = `<div style="text-align: center; color: #94a3b8; margin-top: 50px;">請由左側 (或下方) 選擇一個訓練課表開始紀錄</div>`;
+            return;
+        }
+
+        const prog = workoutPrograms[currentProgramIdx];
+        let html = `<h2 style="color: #334155; margin-top:0; border-bottom: 2px solid var(--workout-color); padding-bottom: 10px;">🏋️ ${prog.name}</h2>`;
+        
+        prog.parts.forEach((part, ptIdx) => {
+            html += `
+                <div class="part-container">
+                    <div class="part-header">
+                        <h3>📍 ${part.name}</h3>
+                        <button class="btn-icon" onclick="deletePart(${ptIdx})">✖</button>
+                    </div>
+                    <div id="exList_${ptIdx}">
+            `;
+            
+            // 渲染已儲存的項目
+            part.exercises.forEach((ex, exIdx) => {
+                html += `
+                    <div class="ex-row">
+                        <div>
+                            <span class="ex-label">項目</span>
+                            <input type="text" class="ex-name" placeholder="例如: 槓鈴臥推" value="${ex.name}" onchange="updateExField(${ptIdx}, ${exIdx}, 'name', this)">
+                        </div>
+                        <div>
+                            <span class="ex-label">重量</span>
+                            <input type="number" class="ex-num" step="1" placeholder="kg" value="${ex.weight}" onchange="updateExField(${ptIdx}, ${exIdx}, 'weight', this)">
+                        </div>
+                        <div>
+                            <span class="ex-label">RM</span>
+                            <input type="number" class="ex-num" step="1" placeholder="次" value="${ex.rm}" onchange="updateExField(${ptIdx}, ${exIdx}, 'rm', this)">
+                        </div>
+                        <div>
+                            <span class="ex-label">組數</span>
+                            <input type="number" class="ex-num" step="1" placeholder="組" value="${ex.sets}" onchange="updateExField(${ptIdx}, ${exIdx}, 'sets', this)">
+                        </div>
+                        <button class="btn-icon" onclick="deleteExercise(${ptIdx}, ${exIdx})" style="margin-left:auto;">🗑️</button>
+                    </div>
+                `;
+            });
+
+            // 新增輸入專區
+            html += `
+                    </div>
+                    <div class="ex-row" style="background: #eff6ff; border: 1px dashed #93c5fd; margin-top: 15px;">
+                        <div>
+                            <span class="ex-label" style="color:#2563eb;">新項目</span>
+                            <input type="text" id="newExName_${ptIdx}" class="ex-name" placeholder="例如: 槓鈴臥推">
+                        </div>
+                        <div>
+                            <span class="ex-label">重量</span>
+                            <input type="number" id="newExWeight_${ptIdx}" class="ex-num" step="1" placeholder="kg">
+                        </div>
+                        <div>
+                            <span class="ex-label">RM</span>
+                            <input type="number" id="newExRm_${ptIdx}" class="ex-num" step="1" placeholder="次">
+                        </div>
+                        <div>
+                            <span class="ex-label">組數</span>
+                            <input type="number" id="newExSets_${ptIdx}" class="ex-num" step="1" placeholder="組">
+                        </div>
+                        <button class="add-submit-btn" onclick="submitNewExercise(${ptIdx})">＋ 加入</button>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `<button class="add-btn add-part-btn" onclick="addPart()">＋ 新增訓練部位</button>`;
+        detailDiv.innerHTML = html;
+    }
+
     function initAppUI() {
         document.getElementById('monthTitle').innerText = `${currentYear}年 ${currentMonth + 1}月`;
         renderCalendar();
@@ -315,7 +577,6 @@
         window.switchToDate(todayDateStr);
     }
 
-    // 切換月份功能
     window.changeMonth = (offset) => {
         currentMonth += offset;
         if (currentMonth < 0) { currentMonth = 11; currentYear--; } 
@@ -332,7 +593,6 @@
         window.switchToDate(editingDate);
     };
 
-    // 儲存體重功能
     window.saveWeight = async () => {
         const w = parseFloat(document.getElementById('dailyWeight').value) || 0;
         if (w === 0) return alert("請輸入有效的體重數字！");
@@ -478,6 +738,11 @@
     window.switchToDate = (dateStr) => {
         editingDate = dateStr;
         const isToday = (dateStr === todayDateStr);
+        
+        if(document.getElementById('workoutTab').style.display === 'flex') {
+            window.switchTab('nutrition');
+        }
+
         window.toggleMode('record');
         document.getElementById('statusTag').className = isToday ? "status-tag tag-today" : "status-tag tag-edit";
         document.getElementById('statusTag').innerText = isToday ? "今日紀錄" : `補登：${dateStr.split('-')[2]}日`;
@@ -485,12 +750,10 @@
         
         const data = allDailyData[dateStr] || { cal: 0, pro: 0, list: [], weight: 0 };
         
-        // 更新當前數值與體重
         document.getElementById('curCal').innerText = `${Math.round(data.cal)} kcal`;
         document.getElementById('curPro').innerText = `${data.pro.toFixed(1)} g`;
         document.getElementById('dailyWeight').value = data.weight || '';
         
-        // 計算與更新目標剩餘
         if(myTargets.tdee > 0) {
             let remC = myTargets.tdee - data.cal;
             let remCElem = document.getElementById('remCal');
@@ -558,7 +821,6 @@
             cell.className = `day-cell ${dateStr === todayDateStr ? 'today' : ''} ${dateStr === editingDate ? 'editing-target' : ''}`;
             const data = monthData[dateStr]; 
             
-            // 如果有體重資料，就顯示出來
             let weightHtml = data && data.weight ? `<div class="weight">⚖️${data.weight}kg</div>` : '';
             
             cell.innerHTML = `
