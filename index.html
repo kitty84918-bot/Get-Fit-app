@@ -99,9 +99,19 @@
         .prog-card.active { border: 2px solid var(--workout-color); background: #fff7ed; }
         .prog-title { font-weight: bold; color: #334155; font-size: 15px;}
         
-        .part-container { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-        .part-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 15px; }
-        .part-header h3 { margin: 0; color: #475569; font-size: 18px; }
+        .part-container { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        
+        /* 展開/收合專用樣式 */
+        .part-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid transparent; cursor: pointer; transition: 0.2s; user-select: none; }
+        .part-header:hover { opacity: 0.7; }
+        .part-header.active { border-bottom-color: #f1f5f9; padding-bottom: 10px; margin-bottom: 0; }
+        .part-header h3 { margin: 0; color: #475569; font-size: 18px; display: flex; align-items: center; }
+        
+        .toggle-icon { display: inline-block; transition: transform 0.3s; margin-right: 10px; font-size: 14px; color: #94a3b8; }
+        .toggle-icon.expanded { transform: rotate(90deg); color: var(--workout-color); }
+        
+        .part-content { display: none; padding-top: 15px; }
+        .part-content.expanded { display: block; }
         
         .ex-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; flex-wrap: wrap; }
         .ex-row input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: white; }
@@ -306,6 +316,7 @@
     let customMenu = {}; 
     let workoutPrograms = [];
     let currentProgramIdx = -1;
+    let expandedParts = new Set(); // 儲存展開的訓練部位索引
 
     const now = new Date();
     let currentYear = now.getFullYear();
@@ -390,6 +401,7 @@
         if (!name || name.trim() === "") return;
         workoutPrograms.push({ name: name.trim(), parts: [] });
         currentProgramIdx = workoutPrograms.length - 1;
+        expandedParts.clear(); // 新課表清空展開狀態
         await syncToDB();
         renderProgramList();
         renderProgramDetail();
@@ -399,7 +411,10 @@
         event.stopPropagation();
         if (confirm(`確定要刪除課表「${workoutPrograms[idx].name}」嗎？`)) {
             workoutPrograms.splice(idx, 1);
-            if (currentProgramIdx === idx) currentProgramIdx = -1;
+            if (currentProgramIdx === idx) {
+                currentProgramIdx = -1;
+                expandedParts.clear();
+            }
             else if (currentProgramIdx > idx) currentProgramIdx--;
             await syncToDB();
             renderProgramList();
@@ -409,6 +424,7 @@
 
     window.selectProgram = (idx) => {
         currentProgramIdx = idx;
+        expandedParts.clear(); // 切換課表時，自動收起所有部位
         renderProgramList();
         renderProgramDetail();
         
@@ -435,13 +451,20 @@
         const partName = prompt("請輸入訓練部位：\n(例如：胸部、背部、肩部、腿部)");
         if (!partName || partName.trim() === "") return;
         workoutPrograms[currentProgramIdx].parts.push({ name: partName.trim(), exercises: [] });
+        
+        // 自動將新建立的部位展開
+        const newPtIdx = workoutPrograms[currentProgramIdx].parts.length - 1;
+        expandedParts.add(newPtIdx);
+        
         await syncToDB();
         renderProgramDetail();
     };
 
-    window.deletePart = async (ptIdx) => {
+    window.deletePart = async (ptIdx, event) => {
+        event.stopPropagation(); // 避免觸發收合展開
         if (confirm(`確定要刪除部位「${workoutPrograms[currentProgramIdx].parts[ptIdx].name}」及其內含的所有項目嗎？`)) {
             workoutPrograms[currentProgramIdx].parts.splice(ptIdx, 1);
+            expandedParts.delete(ptIdx);
             await syncToDB();
             renderProgramDetail();
         }
@@ -456,7 +479,6 @@
         }
     };
 
-    // 原有的即時更新功能保留，讓舊項目可以直接編輯
     window.updateExField = (ptIdx, exIdx, field, element) => {
         let val = element.value;
         if (field !== 'name') {
@@ -468,7 +490,6 @@
         syncToDB(); 
     };
 
-    // 新增：處理先輸入資料後再加入的按鈕事件
     window.submitNewExercise = async (ptIdx) => {
         const nameEl = document.getElementById(`newExName_${ptIdx}`);
         const weightEl = document.getElementById(`newExWeight_${ptIdx}`);
@@ -492,7 +513,17 @@
 
         workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.push({ name, weight, rm, sets });
         await syncToDB();
-        renderProgramDetail(); // 重新渲染，清空輸入框並顯示新項目
+        renderProgramDetail();
+    };
+
+    // 點擊部位標題切換展開/收合
+    window.togglePart = (ptIdx) => {
+        if (expandedParts.has(ptIdx)) {
+            expandedParts.delete(ptIdx);
+        } else {
+            expandedParts.add(ptIdx);
+        }
+        renderProgramDetail();
     };
 
     function renderProgramDetail() {
@@ -506,13 +537,19 @@
         let html = `<h2 style="color: #334155; margin-top:0; border-bottom: 2px solid var(--workout-color); padding-bottom: 10px;">🏋️ ${prog.name}</h2>`;
         
         prog.parts.forEach((part, ptIdx) => {
+            const isExpanded = expandedParts.has(ptIdx);
+            const headerClass = isExpanded ? 'part-header active' : 'part-header';
+            const iconClass = isExpanded ? 'toggle-icon expanded' : 'toggle-icon';
+            const contentClass = isExpanded ? 'part-content expanded' : 'part-content';
+
             html += `
                 <div class="part-container">
-                    <div class="part-header">
-                        <h3>📍 ${part.name}</h3>
-                        <button class="btn-icon" onclick="deletePart(${ptIdx})">✖</button>
+                    <div class="${headerClass}" onclick="togglePart(${ptIdx})">
+                        <h3><span class="${iconClass}">▶</span> ${part.name}</h3>
+                        <button class="btn-icon" onclick="deletePart(${ptIdx}, event)">✖</button>
                     </div>
-                    <div id="exList_${ptIdx}">
+                    <div class="${contentClass}">
+                        <div id="exList_${ptIdx}">
             `;
             
             // 渲染已儲存的項目
@@ -542,25 +579,26 @@
 
             // 新增輸入專區
             html += `
-                    </div>
-                    <div class="ex-row" style="background: #eff6ff; border: 1px dashed #93c5fd; margin-top: 15px;">
-                        <div>
-                            <span class="ex-label" style="color:#2563eb;">新項目</span>
-                            <input type="text" id="newExName_${ptIdx}" class="ex-name" placeholder="例如: 槓鈴臥推">
                         </div>
-                        <div>
-                            <span class="ex-label">重量</span>
-                            <input type="number" id="newExWeight_${ptIdx}" class="ex-num" step="1" placeholder="kg">
+                        <div class="ex-row" style="background: #eff6ff; border: 1px dashed #93c5fd; margin-top: 15px;">
+                            <div>
+                                <span class="ex-label" style="color:#2563eb;">新項目</span>
+                                <input type="text" id="newExName_${ptIdx}" class="ex-name" placeholder="例如: 槓鈴臥推">
+                            </div>
+                            <div>
+                                <span class="ex-label">重量</span>
+                                <input type="number" id="newExWeight_${ptIdx}" class="ex-num" step="1" placeholder="kg">
+                            </div>
+                            <div>
+                                <span class="ex-label">RM</span>
+                                <input type="number" id="newExRm_${ptIdx}" class="ex-num" step="1" placeholder="次">
+                            </div>
+                            <div>
+                                <span class="ex-label">組數</span>
+                                <input type="number" id="newExSets_${ptIdx}" class="ex-num" step="1" placeholder="組">
+                            </div>
+                            <button class="add-submit-btn" onclick="submitNewExercise(${ptIdx})">＋ 加入</button>
                         </div>
-                        <div>
-                            <span class="ex-label">RM</span>
-                            <input type="number" id="newExRm_${ptIdx}" class="ex-num" step="1" placeholder="次">
-                        </div>
-                        <div>
-                            <span class="ex-label">組數</span>
-                            <input type="number" id="newExSets_${ptIdx}" class="ex-num" step="1" placeholder="組">
-                        </div>
-                        <button class="add-submit-btn" onclick="submitNewExercise(${ptIdx})">＋ 加入</button>
                     </div>
                 </div>
             `;
@@ -821,12 +859,12 @@
             cell.className = `day-cell ${dateStr === todayDateStr ? 'today' : ''} ${dateStr === editingDate ? 'editing-target' : ''}`;
             const data = monthData[dateStr]; 
             
-            let weightHtml = data && data.weight ? `<div class="weight">⚖️${data.weight}kg</div>` : '';
+            let weightHtml = data && data.weight ? `<div class="weight">⚖️${data.weight}</div>` : '';
             
             cell.innerHTML = `
                 <div class="date-num">${d}</div>
                 <div class="day-data">
-                    ${data && data.cal ? `<div class="cal">🔥${data.cal}</div><div class="pro">💪${data.pro}g</div>` : ''}
+                    ${data && data.cal ? `<div class="cal">🔥${data.cal}</div><div class="pro">💪${data.pro}</div>` : ''}
                     ${weightHtml}
                 </div>
                 <div class="cell-btns">
