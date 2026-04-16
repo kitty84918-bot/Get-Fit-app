@@ -90,24 +90,26 @@
         .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #e1efff; font-size: 13px; background: white; margin: 2px 0; border-radius: 4px; }
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: 13px; }
 
-        /* --- 運動表現分頁樣式 --- */
-        .workout-sidebar { flex: 1; max-width: 300px; background: white; border-right: 2px solid #e2e8f0; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
-        .workout-main { flex: 3; padding: 25px; overflow-y: auto; background: #fcfcfc; }
+        /* --- 運動表現分頁樣式 (全新整合架構) --- */
+        .workout-container { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
         
         .prog-card { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center;}
         .prog-card:hover { border-color: var(--workout-color); }
-        .prog-card.active { border: 2px solid var(--workout-color); background: #fff7ed; }
-        .prog-title { font-weight: bold; color: #334155; font-size: 15px;}
+        /* 展開狀態的課表卡片，取消下方圓角與邊距，與內容區塊連接 */
+        .prog-card.active { border: 2px solid var(--workout-color); background: #fff7ed; border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
+        .prog-title { font-weight: bold; color: #334155; font-size: 16px;}
         
+        .prog-detail-area { background: #fff; border: 2px solid var(--workout-color); border-top: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding: 20px; margin-bottom: 12px; }
+
         .part-container { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         
         /* 展開/收合專用樣式 */
         .part-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid transparent; cursor: pointer; transition: 0.2s; user-select: none; }
         .part-header:hover { opacity: 0.7; }
         .part-header.active { border-bottom-color: #f1f5f9; padding-bottom: 10px; margin-bottom: 0; }
-        .part-header h3 { margin: 0; color: #475569; font-size: 18px; display: flex; align-items: center; }
+        .part-header h3 { margin: 0; color: #475569; font-size: 17px; display: flex; align-items: center; }
         
-        .toggle-icon { display: inline-block; transition: transform 0.3s; margin-right: 10px; font-size: 14px; color: #94a3b8; }
+        .toggle-icon { display: inline-block; transition: transform 0.3s; margin-right: 10px; font-size: 13px; color: #94a3b8; }
         .toggle-icon.expanded { transform: rotate(90deg); color: var(--workout-color); }
         
         .part-content { display: none; padding-top: 15px; }
@@ -142,13 +144,13 @@
             .cell-btns { opacity: 1; flex-direction: row; gap: 2px; margin-top: 4px; }
             .mini-btn { padding: 4px 0; font-size: 9px; }
 
-            .workout-main { order: 1; padding: 15px; }
-            .workout-sidebar { order: 2; max-width: none; border-right: none; border-top: 2px solid #e2e8f0; }
+            .workout-container { padding: 15px; }
+            .prog-detail-area { padding: 12px; }
             
             .ex-row { flex-direction: column; align-items: stretch; }
             .ex-row > div { display: flex; align-items: center; justify-content: space-between; }
             .ex-num { max-width: none; width: 60%; }
-            .add-submit-btn { width: 100%; margin-top: 8px; padding: 12px; } /* 手機版按鈕加寬加高 */
+            .add-submit-btn { width: 100%; margin-top: 8px; padding: 12px; } 
         }
     </style>
 </head>
@@ -275,18 +277,14 @@
     </div>
 </div>
 
-<div id="workoutTab" class="tab-content" style="display: none;">
-    <div class="workout-sidebar">
-        <h2 style="color: var(--workout-color); font-size: 18px; margin-top: 0;">📋 訓練課表</h2>
-        <button style="background: var(--workout-color); color: white; margin-bottom: 15px;" onclick="addWorkoutProgram()">＋ 新增課表</button>
-        <div id="programList">
-            </div>
-    </div>
-    
-    <div class="workout-main" id="workoutDetail">
-        <div style="text-align: center; color: #94a3b8; margin-top: 50px;">
-            請由左側 (或下方) 選擇一個訓練課表開始紀錄
+<div id="workoutTab" class="tab-content" style="display: none; background: #fcfcfc; overflow-y: auto;">
+    <div class="workout-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: var(--workout-color); margin: 0;">📋 訓練課表</h2>
+            <button style="background: var(--workout-color); color: white; padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;" onclick="addWorkoutProgram()">＋ 新增課表</button>
         </div>
+        <div id="workoutProgramsContainer">
+            </div>
     </div>
 </div>
 
@@ -332,8 +330,7 @@
         document.getElementById('tabBtnWorkout').className = tab === 'workout' ? 'tab-btn workout-active' : 'tab-btn';
         
         if (tab === 'workout') {
-            renderProgramList();
-            renderProgramDetail();
+            renderWorkoutUI();
         }
     };
 
@@ -396,15 +393,16 @@
         });
     }
 
+    // --- 運動表現核心渲染與操作邏輯 ---
+    
     window.addWorkoutProgram = async () => {
         const name = prompt("請輸入新訓練課表名稱：\n(例如：胸背肩腿 - 推日)");
         if (!name || name.trim() === "") return;
         workoutPrograms.push({ name: name.trim(), parts: [] });
         currentProgramIdx = workoutPrograms.length - 1;
-        expandedParts.clear(); // 新課表清空展開狀態
+        expandedParts.clear(); 
         await syncToDB();
-        renderProgramList();
-        renderProgramDetail();
+        renderWorkoutUI();
     };
 
     window.deleteProgram = async (idx, event) => {
@@ -417,34 +415,20 @@
             }
             else if (currentProgramIdx > idx) currentProgramIdx--;
             await syncToDB();
-            renderProgramList();
-            renderProgramDetail();
+            renderWorkoutUI();
         }
     };
 
     window.selectProgram = (idx) => {
-        currentProgramIdx = idx;
-        expandedParts.clear(); // 切換課表時，自動收起所有部位
-        renderProgramList();
-        renderProgramDetail();
-        
-        if (window.innerWidth <= 900) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (currentProgramIdx === idx) {
+            // 如果點擊已展開的課表，則收起它
+            currentProgramIdx = -1;
+        } else {
+            currentProgramIdx = idx;
         }
+        expandedParts.clear(); // 切換或關閉課表時，自動收起所有部位
+        renderWorkoutUI();
     };
-
-    function renderProgramList() {
-        const listDiv = document.getElementById('programList');
-        listDiv.innerHTML = '';
-        workoutPrograms.forEach((prog, idx) => {
-            listDiv.innerHTML += `
-                <div class="prog-card ${idx === currentProgramIdx ? 'active' : ''}" onclick="selectProgram(${idx})">
-                    <span class="prog-title">${prog.name}</span>
-                    <button class="btn-icon" onclick="deleteProgram(${idx}, event)">🗑️</button>
-                </div>
-            `;
-        });
-    }
 
     window.addPart = async () => {
         if (currentProgramIdx === -1) return;
@@ -457,16 +441,16 @@
         expandedParts.add(newPtIdx);
         
         await syncToDB();
-        renderProgramDetail();
+        renderWorkoutUI();
     };
 
     window.deletePart = async (ptIdx, event) => {
-        event.stopPropagation(); // 避免觸發收合展開
+        event.stopPropagation(); // 避免觸發手風琴展開/收合
         if (confirm(`確定要刪除部位「${workoutPrograms[currentProgramIdx].parts[ptIdx].name}」及其內含的所有項目嗎？`)) {
             workoutPrograms[currentProgramIdx].parts.splice(ptIdx, 1);
             expandedParts.delete(ptIdx);
             await syncToDB();
-            renderProgramDetail();
+            renderWorkoutUI();
         }
     };
 
@@ -475,14 +459,21 @@
         if (confirm(`確定要刪除「${exName}」嗎？`)) {
             workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.splice(exIdx, 1);
             await syncToDB();
-            renderProgramDetail();
+            renderWorkoutUI();
         }
     };
 
+    // 更新現有項目的數據
     window.updateExField = (ptIdx, exIdx, field, element) => {
         let val = element.value;
         if (field !== 'name') {
-            val = val === '' ? '' : parseInt(val, 10);
+            if (field === 'weight') {
+                // 重量允許小數點
+                val = val === '' ? '' : parseFloat(val);
+            } else {
+                // RM、組數維持整數
+                val = val === '' ? '' : parseInt(val, 10);
+            }
             if (isNaN(val)) val = '';
             element.value = val; 
         }
@@ -490,6 +481,7 @@
         syncToDB(); 
     };
 
+    // 新增項目功能
     window.submitNewExercise = async (ptIdx) => {
         const nameEl = document.getElementById(`newExName_${ptIdx}`);
         const weightEl = document.getElementById(`newExWeight_${ptIdx}`);
@@ -502,7 +494,8 @@
             return;
         }
         
-        let weight = weightEl.value === '' ? '' : parseInt(weightEl.value, 10);
+        // 重量允許小數點
+        let weight = weightEl.value === '' ? '' : parseFloat(weightEl.value);
         if (isNaN(weight)) weight = '';
         
         let rm = rmEl.value === '' ? '' : parseInt(rmEl.value, 10);
@@ -513,7 +506,7 @@
 
         workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.push({ name, weight, rm, sets });
         await syncToDB();
-        renderProgramDetail();
+        renderWorkoutUI();
     };
 
     // 點擊部位標題切換展開/收合
@@ -523,91 +516,119 @@
         } else {
             expandedParts.add(ptIdx);
         }
-        renderProgramDetail();
+        renderWorkoutUI();
     };
 
-    function renderProgramDetail() {
-        const detailDiv = document.getElementById('workoutDetail');
-        if (currentProgramIdx === -1 || !workoutPrograms[currentProgramIdx]) {
-            detailDiv.innerHTML = `<div style="text-align: center; color: #94a3b8; margin-top: 50px;">請由左側 (或下方) 選擇一個訓練課表開始紀錄</div>`;
-            return;
+    // 統一渲染整個運動表現視圖
+    function renderWorkoutUI() {
+        const container = document.getElementById('workoutProgramsContainer');
+        if (!container) return;
+        let html = '';
+
+        if (workoutPrograms.length === 0) {
+            html = `<div style="text-align: center; color: #94a3b8; margin-top: 50px;">請點擊右上方「＋ 新增課表」開始建立您的專屬課表</div>`;
         }
 
-        const prog = workoutPrograms[currentProgramIdx];
-        let html = `<h2 style="color: #334155; margin-top:0; border-bottom: 2px solid var(--workout-color); padding-bottom: 10px;">🏋️ ${prog.name}</h2>`;
-        
-        prog.parts.forEach((part, ptIdx) => {
-            const isExpanded = expandedParts.has(ptIdx);
-            const headerClass = isExpanded ? 'part-header active' : 'part-header';
-            const iconClass = isExpanded ? 'toggle-icon expanded' : 'toggle-icon';
-            const contentClass = isExpanded ? 'part-content expanded' : 'part-content';
-
-            html += `
-                <div class="part-container">
-                    <div class="${headerClass}" onclick="togglePart(${ptIdx})">
-                        <h3><span class="${iconClass}">▶</span> ${part.name}</h3>
-                        <button class="btn-icon" onclick="deletePart(${ptIdx}, event)">✖</button>
-                    </div>
-                    <div class="${contentClass}">
-                        <div id="exList_${ptIdx}">
-            `;
+        workoutPrograms.forEach((prog, pIdx) => {
+            const isActiveProg = (currentProgramIdx === pIdx);
             
-            // 渲染已儲存的項目
-            part.exercises.forEach((ex, exIdx) => {
-                html += `
-                    <div class="ex-row">
-                        <div>
-                            <span class="ex-label">項目</span>
-                            <input type="text" class="ex-name" placeholder="例如: 槓鈴臥推" value="${ex.name}" onchange="updateExField(${ptIdx}, ${exIdx}, 'name', this)">
-                        </div>
-                        <div>
-                            <span class="ex-label">重量</span>
-                            <input type="number" class="ex-num" step="1" placeholder="kg" value="${ex.weight}" onchange="updateExField(${ptIdx}, ${exIdx}, 'weight', this)">
-                        </div>
-                        <div>
-                            <span class="ex-label">RM</span>
-                            <input type="number" class="ex-num" step="1" placeholder="次" value="${ex.rm}" onchange="updateExField(${ptIdx}, ${exIdx}, 'rm', this)">
-                        </div>
-                        <div>
-                            <span class="ex-label">組數</span>
-                            <input type="number" class="ex-num" step="1" placeholder="組" value="${ex.sets}" onchange="updateExField(${ptIdx}, ${exIdx}, 'sets', this)">
-                        </div>
-                        <button class="btn-icon" onclick="deleteExercise(${ptIdx}, ${exIdx})" style="margin-left:auto;">🗑️</button>
-                    </div>
-                `;
-            });
-
-            // 新增輸入專區
             html += `
-                        </div>
-                        <div class="ex-row" style="background: #eff6ff; border: 1px dashed #93c5fd; margin-top: 15px;">
-                            <div>
-                                <span class="ex-label" style="color:#2563eb;">新項目</span>
-                                <input type="text" id="newExName_${ptIdx}" class="ex-name" placeholder="例如: 槓鈴臥推">
-                            </div>
-                            <div>
-                                <span class="ex-label">重量</span>
-                                <input type="number" id="newExWeight_${ptIdx}" class="ex-num" step="1" placeholder="kg">
-                            </div>
-                            <div>
-                                <span class="ex-label">RM</span>
-                                <input type="number" id="newExRm_${ptIdx}" class="ex-num" step="1" placeholder="次">
-                            </div>
-                            <div>
-                                <span class="ex-label">組數</span>
-                                <input type="number" id="newExSets_${ptIdx}" class="ex-num" step="1" placeholder="組">
-                            </div>
-                            <button class="add-submit-btn" onclick="submitNewExercise(${ptIdx})">＋ 加入</button>
-                        </div>
-                    </div>
+            <div style="margin-bottom: 15px;">
+                <div class="prog-card ${isActiveProg ? 'active' : ''}" onclick="selectProgram(${pIdx})">
+                    <span class="prog-title">
+                        <span class="toggle-icon ${isActiveProg ? 'expanded' : ''}">▶</span> ${prog.name}
+                    </span>
+                    <button class="btn-icon" onclick="deleteProgram(${pIdx}, event)">🗑️</button>
                 </div>
             `;
+
+            // 如果該課表被選中，則在其下方展開部位列表
+            if (isActiveProg) {
+                html += `<div class="prog-detail-area">`;
+                
+                if (prog.parts.length === 0) {
+                    html += `<div style="text-align: center; color: #94a3b8; margin-bottom: 15px;">此課表目前沒有設定訓練部位</div>`;
+                }
+
+                prog.parts.forEach((part, ptIdx) => {
+                    const isExpanded = expandedParts.has(ptIdx);
+                    const headerClass = isExpanded ? 'part-header active' : 'part-header';
+                    const iconClass = isExpanded ? 'toggle-icon expanded' : 'toggle-icon';
+                    const contentClass = isExpanded ? 'part-content expanded' : 'part-content';
+
+                    html += `
+                        <div class="part-container">
+                            <div class="${headerClass}" onclick="togglePart(${ptIdx})">
+                                <h3><span class="${iconClass}">▶</span> ${part.name}</h3>
+                                <button class="btn-icon" onclick="deletePart(${ptIdx}, event)">✖</button>
+                            </div>
+                            <div class="${contentClass}">
+                                <div id="exList_${ptIdx}">
+                    `;
+                    
+                    // 渲染已儲存的項目
+                    part.exercises.forEach((ex, exIdx) => {
+                        html += `
+                            <div class="ex-row">
+                                <div>
+                                    <span class="ex-label">項目</span>
+                                    <input type="text" class="ex-name" placeholder="例如: 槓鈴臥推" value="${ex.name}" onchange="updateExField(${ptIdx}, ${exIdx}, 'name', this)">
+                                </div>
+                                <div>
+                                    <span class="ex-label">重量</span>
+                                    <input type="number" class="ex-num" step="0.1" placeholder="kg" value="${ex.weight}" onchange="updateExField(${ptIdx}, ${exIdx}, 'weight', this)">
+                                </div>
+                                <div>
+                                    <span class="ex-label">RM</span>
+                                    <input type="number" class="ex-num" step="1" placeholder="次" value="${ex.rm}" onchange="updateExField(${ptIdx}, ${exIdx}, 'rm', this)">
+                                </div>
+                                <div>
+                                    <span class="ex-label">組數</span>
+                                    <input type="number" class="ex-num" step="1" placeholder="組" value="${ex.sets}" onchange="updateExField(${ptIdx}, ${exIdx}, 'sets', this)">
+                                </div>
+                                <button class="btn-icon" onclick="deleteExercise(${ptIdx}, ${exIdx})" style="margin-left:auto;">🗑️</button>
+                            </div>
+                        `;
+                    });
+
+                    // 新增輸入專區 (重量修改為 step="0.1")
+                    html += `
+                                </div>
+                                <div class="ex-row" style="background: #eff6ff; border: 1px dashed #93c5fd; margin-top: 15px;">
+                                    <div>
+                                        <span class="ex-label" style="color:#2563eb;">新項目</span>
+                                        <input type="text" id="newExName_${ptIdx}" class="ex-name" placeholder="例如: 槓鈴臥推">
+                                    </div>
+                                    <div>
+                                        <span class="ex-label">重量</span>
+                                        <input type="number" id="newExWeight_${ptIdx}" class="ex-num" step="0.1" placeholder="kg">
+                                    </div>
+                                    <div>
+                                        <span class="ex-label">RM</span>
+                                        <input type="number" id="newExRm_${ptIdx}" class="ex-num" step="1" placeholder="次">
+                                    </div>
+                                    <div>
+                                        <span class="ex-label">組數</span>
+                                        <input type="number" id="newExSets_${ptIdx}" class="ex-num" step="1" placeholder="組">
+                                    </div>
+                                    <button class="add-submit-btn" onclick="submitNewExercise(${ptIdx})">＋ 加入</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `<button class="add-btn add-part-btn" onclick="addPart()">＋ 新增訓練部位</button>`;
+                html += `</div>`; // end prog-detail-area
+            }
+            
+            html += `</div>`; // end prog-group
         });
 
-        html += `<button class="add-btn add-part-btn" onclick="addPart()">＋ 新增訓練部位</button>`;
-        detailDiv.innerHTML = html;
+        container.innerHTML = html;
     }
 
+    // --- 飲食 UI 原有邏輯 ---
     function initAppUI() {
         document.getElementById('monthTitle').innerText = `${currentYear}年 ${currentMonth + 1}月`;
         renderCalendar();
