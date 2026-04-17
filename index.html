@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🍎個人營養與體重月曆 - 雲端完整版</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
         :root { 
             --primary-color: #a64d4d; 
@@ -85,25 +86,25 @@
         .stat-rem { font-size: 12px; font-weight: bold; margin-top: 3px; }
         .settle-btn { background-color: var(--accent-color); color: white; margin-top: 10px; }
         
+        /* 拖曳清單專屬樣式 */
         .menu-list-container { margin-top: 15px; border-top: 1px solid #d1e3f3; padding-top: 15px; }
-        .menu-group-title { font-size: 13px; color: var(--manage-primary); font-weight: bold; background: #e1efff; padding: 5px 12px; border-radius: 5px; margin-top: 10px; }
-        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #e1efff; font-size: 13px; background: white; margin: 2px 0; border-radius: 4px; }
+        .menu-group-title { font-size: 14px; color: var(--manage-primary); font-weight: bold; padding: 5px 0; }
+        .menu-group-list { min-height: 40px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 5px; margin-bottom: 15px; transition: background 0.3s; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border: 1px solid #e1efff; font-size: 13px; background: white; margin: 4px 0; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .menu-item:active { cursor: grabbing !important; }
+        .sortable-ghost { opacity: 0.4; background-color: #e2e8f0; border: 1px dashed #94a3b8; } /* 拖拉時的佔位符樣式 */
+        .drag-handle { color: #94a3b8; margin-right: 8px; cursor: grab; font-size: 16px; }
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px dashed #eee; font-size: 13px; }
 
         /* --- 運動表現分頁樣式 (全新整合架構) --- */
         .workout-container { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; box-sizing: border-box; }
-        
         .prog-card { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center;}
         .prog-card:hover { border-color: var(--workout-color); }
-        /* 展開狀態的課表卡片，取消下方圓角與邊距，與內容區塊連接 */
         .prog-card.active { border: 2px solid var(--workout-color); background: #fff7ed; border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
         .prog-title { font-weight: bold; color: #334155; font-size: 16px;}
-        
         .prog-detail-area { background: #fff; border: 2px solid var(--workout-color); border-top: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; padding: 20px; margin-bottom: 12px; }
-
         .part-container { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         
-        /* 展開/收合專用樣式 */
         .part-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid transparent; cursor: pointer; transition: 0.2s; user-select: none; }
         .part-header:hover { opacity: 0.7; }
         .part-header.active { border-bottom-color: #f1f5f9; padding-bottom: 10px; margin-bottom: 0; }
@@ -132,7 +133,6 @@
         /* --- 手機版響應式修正 --- */
         @media (max-width: 900px) { 
             body { height: auto; overflow-y: auto; }
-            
             .auth-container { flex-direction: column; gap: 20px; align-items: center; width: 90%; }
             .auth-logo, .auth-box { width: 100%; max-width: 500px; }
 
@@ -256,22 +256,38 @@
 
         <div id="manageUI" style="display:none;">
             <div class="status-tag tag-manage">菜單管理模式</div>
-            <h2>🍴 建立食物清單</h2>
-            <div class="input-group">
-                <label>1. 群組名稱</label>
-                <input type="text" id="mGroup" list="mGroups" placeholder="例如：早餐">
-                <datalist id="mGroups"></datalist>
+            <h2>🍴 管理自訂清單</h2>
+
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #cbd5e1;">
+                <label style="color: var(--manage-primary); margin-bottom: 8px;">📁 1. 建立新群組</label>
+                <div class="row" style="margin-bottom: 0;">
+                    <input type="text" id="newGroupName" placeholder="群組名稱 (例: 早餐)">
+                    <button style="width: 80px; background: var(--manage-primary); color: white; margin-bottom: 0;" onclick="addNewGroup()">新增</button>
+                </div>
             </div>
-            <div class="input-group">
-                <label>2. 食物名稱</label>
-                <input type="text" id="mName" placeholder="例如：三明治">
+
+            <div style="background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <label style="color: var(--manage-primary); margin-bottom: 8px;">➕ 2. 加入食物至群組</label>
+                <div class="input-group">
+                    <select id="mGroupSelect">
+                        <option value="">-- 先選擇群組 --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="mName" placeholder="食物名稱 (例: 拿鐵)">
+                </div>
+                <div class="row" style="margin-bottom: 10px;">
+                    <div><input type="number" id="mCal" placeholder="熱量 (kcal)"></div>
+                    <div><input type="number" id="mPro" placeholder="蛋白質 (g)"></div>
+                </div>
+                <button class="save-menu-btn" onclick="saveToMenu()">儲存到清單 ＋</button>
             </div>
-            <div class="row">
-                <div><label>熱量</label><input type="number" id="mCal" placeholder="0"></div>
-                <div><label>蛋白質</label><input type="number" id="mPro" placeholder="0"></div>
+
+            <button style="margin-top:5px; background:#e2e8f0; color:#475569;" onclick="toggleMode('record')">← 返回紀錄模式</button>
+            
+            <div style="margin-top: 15px; font-size: 12px; color: #64748b; background: #fffbeb; padding: 8px; border-radius: 5px; border: 1px solid #bfdbfe;">
+                💡 提示：按住項目左側的 <b>☰</b> 符號，可直接拖曳調整順序或移至其他群組中。空群組亦可作為放置目標。
             </div>
-            <button class="save-menu-btn" onclick="saveToMenu()">儲存到清單 ＋</button>
-            <button style="margin-top:10px; background:#e2e8f0; color:#475569;" onclick="toggleMode('record')">← 返回紀錄模式</button>
             <div class="menu-list-container" id="menuListView"></div>
         </div>
     </div>
@@ -283,8 +299,7 @@
             <h2 style="color: var(--workout-color); margin: 0;">📋 訓練課表</h2>
             <button style="background: var(--workout-color); color: white; padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;" onclick="addWorkoutProgram()">＋ 新增課表</button>
         </div>
-        <div id="workoutProgramsContainer">
-            </div>
+        <div id="workoutProgramsContainer"></div>
     </div>
 </div>
 
@@ -314,7 +329,7 @@
     let customMenu = {}; 
     let workoutPrograms = [];
     let currentProgramIdx = -1;
-    let expandedParts = new Set(); // 儲存展開的訓練部位索引
+    let expandedParts = new Set();
 
     const now = new Date();
     let currentYear = now.getFullYear();
@@ -393,8 +408,7 @@
         });
     }
 
-    // --- 運動表現核心渲染與操作邏輯 ---
-    
+    // --- 運動表現邏輯 ---
     window.addWorkoutProgram = async () => {
         const name = prompt("請輸入新訓練課表名稱：\n(例如：胸背肩腿 - 推日)");
         if (!name || name.trim() === "") return;
@@ -421,12 +435,11 @@
 
     window.selectProgram = (idx) => {
         if (currentProgramIdx === idx) {
-            // 如果點擊已展開的課表，則收起它
             currentProgramIdx = -1;
         } else {
             currentProgramIdx = idx;
         }
-        expandedParts.clear(); // 切換或關閉課表時，自動收起所有部位
+        expandedParts.clear(); 
         renderWorkoutUI();
     };
 
@@ -435,17 +448,14 @@
         const partName = prompt("請輸入訓練部位：\n(例如：胸部、背部、肩部、腿部)");
         if (!partName || partName.trim() === "") return;
         workoutPrograms[currentProgramIdx].parts.push({ name: partName.trim(), exercises: [] });
-        
-        // 自動將新建立的部位展開
         const newPtIdx = workoutPrograms[currentProgramIdx].parts.length - 1;
         expandedParts.add(newPtIdx);
-        
         await syncToDB();
         renderWorkoutUI();
     };
 
     window.deletePart = async (ptIdx, event) => {
-        event.stopPropagation(); // 避免觸發手風琴展開/收合
+        event.stopPropagation(); 
         if (confirm(`確定要刪除部位「${workoutPrograms[currentProgramIdx].parts[ptIdx].name}」及其內含的所有項目嗎？`)) {
             workoutPrograms[currentProgramIdx].parts.splice(ptIdx, 1);
             expandedParts.delete(ptIdx);
@@ -463,15 +473,12 @@
         }
     };
 
-    // 更新現有項目的數據
     window.updateExField = (ptIdx, exIdx, field, element) => {
         let val = element.value;
         if (field !== 'name') {
             if (field === 'weight') {
-                // 重量允許小數點
                 val = val === '' ? '' : parseFloat(val);
             } else {
-                // RM、組數維持整數
                 val = val === '' ? '' : parseInt(val, 10);
             }
             if (isNaN(val)) val = '';
@@ -481,7 +488,6 @@
         syncToDB(); 
     };
 
-    // 新增項目功能
     window.submitNewExercise = async (ptIdx) => {
         const nameEl = document.getElementById(`newExName_${ptIdx}`);
         const weightEl = document.getElementById(`newExWeight_${ptIdx}`);
@@ -489,18 +495,12 @@
         const setsEl = document.getElementById(`newExSets_${ptIdx}`);
         
         const name = nameEl.value.trim();
-        if (!name) {
-            alert("請輸入項目名稱！");
-            return;
-        }
+        if (!name) { alert("請輸入項目名稱！"); return; }
         
-        // 重量允許小數點
         let weight = weightEl.value === '' ? '' : parseFloat(weightEl.value);
         if (isNaN(weight)) weight = '';
-        
         let rm = rmEl.value === '' ? '' : parseInt(rmEl.value, 10);
         if (isNaN(rm)) rm = '';
-        
         let sets = setsEl.value === '' ? '' : parseInt(setsEl.value, 10);
         if (isNaN(sets)) sets = '';
 
@@ -509,17 +509,12 @@
         renderWorkoutUI();
     };
 
-    // 點擊部位標題切換展開/收合
     window.togglePart = (ptIdx) => {
-        if (expandedParts.has(ptIdx)) {
-            expandedParts.delete(ptIdx);
-        } else {
-            expandedParts.add(ptIdx);
-        }
+        if (expandedParts.has(ptIdx)) expandedParts.delete(ptIdx);
+        else expandedParts.add(ptIdx);
         renderWorkoutUI();
     };
 
-    // 統一渲染整個運動表現視圖
     function renderWorkoutUI() {
         const container = document.getElementById('workoutProgramsContainer');
         if (!container) return;
@@ -531,7 +526,6 @@
 
         workoutPrograms.forEach((prog, pIdx) => {
             const isActiveProg = (currentProgramIdx === pIdx);
-            
             html += `
             <div style="margin-bottom: 15px;">
                 <div class="prog-card ${isActiveProg ? 'active' : ''}" onclick="selectProgram(${pIdx})">
@@ -542,10 +536,8 @@
                 </div>
             `;
 
-            // 如果該課表被選中，則在其下方展開部位列表
             if (isActiveProg) {
                 html += `<div class="prog-detail-area">`;
-                
                 if (prog.parts.length === 0) {
                     html += `<div style="text-align: center; color: #94a3b8; margin-bottom: 15px;">此課表目前沒有設定訓練部位</div>`;
                 }
@@ -566,7 +558,6 @@
                                 <div id="exList_${ptIdx}">
                     `;
                     
-                    // 渲染已儲存的項目
                     part.exercises.forEach((ex, exIdx) => {
                         html += `
                             <div class="ex-row">
@@ -591,7 +582,6 @@
                         `;
                     });
 
-                    // 新增輸入專區 (重量修改為 step="0.1")
                     html += `
                                 </div>
                                 <div class="ex-row" style="background: #eff6ff; border: 1px dashed #93c5fd; margin-top: 15px;">
@@ -619,10 +609,9 @@
                 });
 
                 html += `<button class="add-btn add-part-btn" onclick="addPart()">＋ 新增訓練部位</button>`;
-                html += `</div>`; // end prog-detail-area
+                html += `</div>`; 
             }
-            
-            html += `</div>`; // end prog-group
+            html += `</div>`; 
         });
 
         container.innerHTML = html;
@@ -689,53 +678,137 @@
         }
     };
 
+    // --- 菜單管理核心邏輯更新 ---
+    
+    window.addNewGroup = async () => {
+        const gName = document.getElementById('newGroupName').value.trim();
+        if (!gName) return alert("請輸入群組名稱！");
+        if (customMenu[gName]) return alert("群組名稱已存在！");
+
+        customMenu[gName] = [];
+        await syncToDB();
+        document.getElementById('newGroupName').value = '';
+        renderManageList();
+        updateSelectors();
+        
+        // 建立後自動將下拉選單選定至該群組
+        const mGroupSelect = document.getElementById('mGroupSelect');
+        if (mGroupSelect) mGroupSelect.value = gName;
+    };
+
     window.saveToMenu = async () => {
-        const g = document.getElementById('mGroup').value.trim();
+        const g = document.getElementById('mGroupSelect').value;
         const n = document.getElementById('mName').value.trim();
         const c = parseFloat(document.getElementById('mCal').value) || 0;
         const p = parseFloat(document.getElementById('mPro').value) || 0;
-        if (!g || !n) return;
+        
+        if (!g) return alert("請先選擇或建立群組！");
+        if (!n) return alert("請輸入食物名稱！");
+        
         if (!customMenu[g]) customMenu[g] = [];
         customMenu[g].push({ name: n, cal: c, pro: p });
+        
         await syncToDB();
         renderManageList();
         ['mName', 'mCal', 'mPro'].forEach(id => document.getElementById(id).value = '');
     };
 
-    function renderManageList() {
-        const view = document.getElementById('menuListView');
-        const dl = document.getElementById('mGroups');
-        view.innerHTML = ''; dl.innerHTML = '';
-        for (let group in customMenu) {
-            const opt = document.createElement('option'); opt.value = group; dl.appendChild(opt);
-            const groupDiv = document.createElement('div');
-            groupDiv.innerHTML = `<div class="menu-group-title">${group}</div>`;
-            customMenu[group].forEach((item, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'menu-item';
-                itemDiv.innerHTML = `<span>${item.name} <small>(🔥${item.cal}/💪${item.pro}g)</small></span>
-                    <span style="color:#ff8a8a; cursor:pointer;" onclick="deleteMenuItem('${group}', ${index})">🗑️</span>`;
-                groupDiv.appendChild(itemDiv);
-            });
-            view.appendChild(groupDiv);
-        }
-    }
-
-    window.deleteMenuItem = async (group, index) => {
-        if (confirm(`刪除「${customMenu[group][index].name}」？`)) {
-            customMenu[group].splice(index, 1);
-            if (customMenu[group].length === 0) delete customMenu[group];
+    window.deleteGroup = async (group) => {
+        if (confirm(`確定要刪除群組「${group}」及其內含的所有食物嗎？`)) {
+            delete customMenu[group];
             await syncToDB();
             renderManageList();
             updateSelectors();
         }
     };
 
+    window.deleteMenuItem = async (group, index) => {
+        if (confirm(`刪除「${customMenu[group][index].name}」？`)) {
+            customMenu[group].splice(index, 1);
+            await syncToDB();
+            renderManageList();
+            updateSelectors();
+        }
+    };
+
+    function renderManageList() {
+        const view = document.getElementById('menuListView');
+        view.innerHTML = ''; 
+
+        for (let group in customMenu) {
+            const groupDiv = document.createElement('div');
+            groupDiv.style.marginBottom = '20px';
+            
+            const header = document.createElement('div');
+            header.className = 'menu-group-title';
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.innerHTML = `<span>📂 ${group}</span> <span style="color:#ef4444; cursor:pointer;" onclick="deleteGroup('${group}')">🗑️ 刪除群組</span>`;
+            groupDiv.appendChild(header);
+
+            const listContainer = document.createElement('div');
+            listContainer.className = 'menu-group-list';
+            listContainer.dataset.group = group;
+
+            customMenu[group].forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item';
+                itemDiv.dataset.index = index;
+                itemDiv.innerHTML = `
+                    <span><span class="drag-handle">☰</span>${item.name} <small>(🔥${item.cal}/💪${item.pro}g)</small></span>
+                    <span style="color:#ef4444; cursor:pointer;" onclick="deleteMenuItem('${group}', ${index})">✖</span>
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+
+            groupDiv.appendChild(listContainer);
+            view.appendChild(groupDiv);
+        }
+
+        // 初始化拖曳功能 (SortableJS)
+        const lists = document.querySelectorAll('.menu-group-list');
+        lists.forEach(el => {
+            new Sortable(el, {
+                group: 'sharedMenu', // 允許跨群組拖曳
+                animation: 150,
+                delay: 150, // 針對手機版加入延遲，避免滑動時誤觸
+                delayOnTouchOnly: true,
+                ghostClass: 'sortable-ghost',
+                handle: '.drag-handle', // 只有按住 ☰ 才能拖曳
+                onEnd: async function (evt) {
+                    const fromGroup = evt.from.dataset.group;
+                    const toGroup = evt.to.dataset.group;
+                    const oldIndex = evt.oldIndex;
+                    const newIndex = evt.newIndex;
+
+                    if (fromGroup === toGroup && oldIndex === newIndex) return;
+
+                    const item = customMenu[fromGroup][oldIndex];
+                    customMenu[fromGroup].splice(oldIndex, 1);
+                    customMenu[toGroup].splice(newIndex, 0, item);
+
+                    await syncToDB();
+                    renderManageList(); 
+                    updateSelectors();
+                }
+            });
+        });
+    }
+
     function updateSelectors() {
         const catS = document.getElementById('categorySelect');
-        catS.innerHTML = '<option value="">--請選擇群組--</option>';
+        const mGroupSelect = document.getElementById('mGroupSelect');
+        
+        if(catS) catS.innerHTML = '<option value="">--請選擇群組--</option>';
+        if(mGroupSelect) mGroupSelect.innerHTML = '<option value="">-- 先選擇群組 --</option>';
+
         for (let g in customMenu) {
-            const opt = document.createElement('option'); opt.value = g; opt.innerText = g; catS.appendChild(opt);
+            if(catS) {
+                const opt = document.createElement('option'); opt.value = g; opt.innerText = g; catS.appendChild(opt);
+            }
+            if(mGroupSelect) {
+                const mOpt = document.createElement('option'); mOpt.value = g; mOpt.innerText = g; mGroupSelect.appendChild(mOpt);
+            }
         }
         window.updateFoodSubSelect();
     }
