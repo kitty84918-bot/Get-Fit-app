@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>健康日誌 — 飲食與體重</title>
+    <title>健康日誌 V1.4</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -426,6 +426,23 @@
             font-size: 10px; font-weight: var(--font-bold);
             color: var(--color-weight); line-height: 1.3; margin-top: 1px;
         }
+        .day-data .workout-dot {
+            font-size: 10px; line-height: 1.3; margin-top: 1px;
+        }
+        /* Streak bar */
+        .streak-bar {
+            display: flex; align-items: center; gap: var(--space-2);
+            font-size: var(--text-sm); font-weight: var(--font-bold);
+            color: var(--color-primary); margin-bottom: var(--space-2);
+        }
+        .streak-badge {
+            background: linear-gradient(135deg, rgba(232,160,176,.35), rgba(196,144,154,.2));
+            border: 1px solid rgba(196,144,154,.3);
+            border-radius: var(--radius-full);
+            padding: 3px var(--space-3);
+            font-size: var(--text-xs); font-weight: var(--font-bold);
+            color: var(--color-primary-dark);
+        }
         .cell-btns {
             display: flex; gap: var(--space-1);
             margin-top: auto; opacity: 0;
@@ -658,108 +675,111 @@
         }
 
         /* ============================================================
-           WORKOUT TAB
+           WORKOUT TAB  — calendar + panel layout
         ============================================================ */
-        #workoutTab { background: var(--color-bg); overflow-y: auto; }
-        .workout-container { width: 100%; max-width: 800px; margin: 0 auto; padding: var(--space-6); }
-        .workout-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: var(--space-6);
-        }
-        .workout-header h2 { color: var(--color-workout); margin: 0; }
+        #workoutTab { background: transparent; overflow: hidden; }
 
-        .prog-card {
-            background: rgba(255,255,255,.62);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,.85);
-            padding: var(--space-4) var(--space-5);
-            border-radius: var(--radius-lg);
-            margin-bottom: var(--space-3);
-            cursor: pointer;
-            transition: all var(--transition-base);
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: var(--shadow-sm);
-        }
-        .prog-card:hover { background: rgba(255,255,255,.82); box-shadow: 0 6px 24px rgba(180,130,155,.16); }
-        .prog-card.active {
-            border: 1px solid rgba(224,184,136,.6);
-            background: rgba(255,248,238,.7);
-            border-bottom-left-radius: 0; border-bottom-right-radius: 0;
-            margin-bottom: 0; box-shadow: none;
-        }
-        .prog-title {
-            font-weight: var(--font-bold);
-            color: var(--color-text-primary); font-size: var(--text-base);
-            display: flex; align-items: center; gap: var(--space-2);
-        }
-        .prog-detail-area {
-            background: var(--color-surface);
-            border: 1.5px solid var(--color-workout); border-top: none;
-            border-bottom-left-radius: var(--radius-lg); border-bottom-right-radius: var(--radius-lg);
-            padding: var(--space-5); margin-bottom: var(--space-3);
-        }
+        /* Calendar cell: workout part name list */
+        .wo-cell-parts { display: flex; flex-direction: column; gap: 1px; margin-top: 3px; flex-grow: 1; }
+        .wo-cell-part  { font-size: 10px; font-weight: var(--font-bold); color: var(--color-workout); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .part-container {
+        /* Part block in right panel */
+        .wo-part {
             background: rgba(255,255,255,.55);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,.8);
             border-radius: var(--radius-lg);
-            padding: var(--space-4) var(--space-5);
-            margin-bottom: var(--space-4);
-            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--space-3); overflow: hidden;
+            box-shadow: 0 2px 10px rgba(180,130,155,.08);
         }
-        .part-header {
+        .wo-part-header {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid transparent;
-            cursor: pointer; transition: all var(--transition-fast);
-            user-select: none;
+            padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+            background: rgba(224,184,136,.18); border-bottom: 1px solid rgba(224,184,136,.3);
         }
-        .part-header:hover { opacity: .8; }
-        .part-header.active { border-bottom-color: var(--color-border); padding-bottom: var(--space-3); margin-bottom: 0; }
-        .toggle-icon { display: inline-block; transition: transform var(--transition-base); margin-right: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
-        .toggle-icon.expanded { transform: rotate(90deg); color: var(--color-workout); }
-        .part-content { display: none; padding-top: var(--space-4); }
-        .part-content.expanded { display: block; }
+        .wo-part-name { font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--color-workout); }
+        .wo-exercises { padding: var(--space-3) var(--space-4); }
 
-        .ex-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr auto;
-            gap: var(--space-2);
-            align-items: center;
-            padding: var(--space-2) var(--space-3);
-            background: rgba(255,255,255,.45);
+        /* Column labels — 4-col: name | weight+unit | rm | del */
+        .wo-col-labels {
+            display: grid; grid-template-columns: minmax(0,1fr) 96px 64px 28px;
+            gap: var(--space-2); padding: 0 0 var(--space-1);
+        }
+        .wo-col-label { font-size: 9px; color: var(--color-text-muted); font-weight: var(--font-bold); text-transform: uppercase; letter-spacing: .04em; }
+
+        /* Existing exercise row (inline editing) */
+        .wo-ex-row {
+            display: grid; grid-template-columns: minmax(0,1fr) 96px 64px 28px;
+            gap: var(--space-2); align-items: center;
+            padding: var(--space-1); margin-bottom: var(--space-1);
+            background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.8);
             border-radius: var(--radius-md);
-            margin-bottom: var(--space-2);
-            border: 1px solid rgba(255,255,255,.75);
         }
-        .ex-row input {
-            padding: var(--space-2);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            font-size: var(--text-sm);
-            background: var(--color-surface);
+        /* Weight cell: [number-input flex:1] + [unit-toggle 30px] */
+        .wo-weight-cell { display: flex; gap: 3px; align-items: stretch; min-width: 0; }
+        .wo-weight-cell .wo-ex-input { flex: 1; min-width: 0; }
+
+        /* Inline-edit input */
+        .wo-ex-input {
+            width: 100%; padding: var(--space-2) var(--space-2);
+            border: 1.5px solid var(--color-border); border-radius: var(--radius-md);
+            font-size: var(--text-sm); font-family: var(--font-family);
+            background: rgba(255,255,255,.9); color: var(--color-text-primary);
+            box-sizing: border-box; outline: none; transition: border-color var(--transition-fast);
         }
-        .ex-row input:focus { border-color: var(--color-workout); box-shadow: 0 0 0 3px rgba(245,158,11,.15); }
-        .ex-label {
-            font-size: var(--text-xs); color: var(--color-text-muted);
-            font-weight: var(--font-bold); text-transform: uppercase;
-            letter-spacing: .04em; display: block; margin-bottom: 2px;
+        .wo-ex-input:focus { border-color: var(--color-workout); box-shadow: 0 0 0 2px rgba(224,184,136,.2); }
+
+        /* Unit toggle in exercise row */
+        .wo-unit-btn {
+            flex-shrink: 0; padding: 4px 3px; width: 30px;
+            background: rgba(224,184,136,.18); border: 1.5px solid rgba(224,184,136,.45);
+            border-radius: var(--radius-md); font-size: 9px; font-weight: var(--font-bold);
+            color: var(--color-workout); cursor: pointer; text-align: center;
+            transition: all var(--transition-fast); font-family: var(--font-family); line-height: 1.2;
         }
-        .ex-row-new {
-            background: var(--color-primary-light);
-            border-color: rgba(196,144,154,.3);
-            border-style: dashed; margin-top: var(--space-4);
+        .wo-unit-btn:hover { background: rgba(224,184,136,.4); }
+        .wo-unit-btn.lb { background: rgba(168,160,200,.18); border-color: rgba(168,160,200,.45); color: var(--color-weight); }
+
+        /* Unit select in forms — inherits global select style, just narrower */
+        .wo-unit-sel {
+            flex-shrink: 0; width: 54px !important;
+            padding: var(--space-2) 4px !important;
+            -webkit-appearance: auto !important; appearance: auto !important;
         }
-        .ex-row-new input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(196,144,154,.15); }
-        .btn-icon {
-            background: none; border: none;
-            color: var(--color-text-muted);
-            cursor: pointer; font-size: 16px;
-            padding: var(--space-1); opacity: .7;
-            transition: all var(--transition-fast);
+        .wo-unit-sel:focus {
+            border-color: var(--color-workout) !important;
+            box-shadow: 0 0 0 3px rgba(224,184,136,.15) !important;
+        }
+
+        /* Add-exercise form (dashed divider below exercises list) */
+        .wo-add-ex-form {
+            border-top: 1px dashed rgba(224,184,136,.4);
+            margin-top: var(--space-3); padding-top: var(--space-3);
+        }
+        .wo-add-ex-form label { color: var(--color-workout); }
+
+        /* Volume summary bar */
+        .wo-volume-summary {
+            background: rgba(224,184,136,.12); border: 1px solid rgba(224,184,136,.3);
+            border-radius: var(--radius-md); padding: var(--space-2) var(--space-4);
+            margin-bottom: var(--space-3); font-size: var(--text-sm);
+            color: var(--color-text-secondary); align-items: center; gap: var(--space-2);
+        }
+        .wo-volume-num { font-size: var(--text-md); font-weight: var(--font-bold); color: var(--color-workout); }
+
+        /* Delete mini button */
+        .wo-del-btn {
+            background: none; border: none; font-size: 14px;
+            color: var(--color-text-muted); cursor: pointer;
+            padding: 2px 4px; opacity: .5; transition: all var(--transition-fast);
             font-family: var(--font-family);
+        }
+        .wo-del-btn:hover { opacity: 1; color: var(--color-danger); }
+
+        .btn-icon {
+            background: none; border: none; color: var(--color-text-muted);
+            cursor: pointer; font-size: 16px; padding: var(--space-1); opacity: .7;
+            transition: all var(--transition-fast); font-family: var(--font-family);
         }
         .btn-icon:hover { opacity: 1; transform: scale(1.15); color: var(--color-danger); }
 
@@ -860,8 +880,43 @@
         .cal-card    .summary-value { color: var(--color-cal); }
         .pro-card    .summary-value { color: var(--color-pro); }
         .weight-card .summary-value { color: var(--color-weight); }
-        .weight-card .summary-value.weight-up   { color: var(--color-danger); }
-        .weight-card .summary-value.weight-down { color: var(--color-success); }
+        .weight-card   .summary-value.weight-up   { color: var(--color-danger); }
+        .weight-card   .summary-value.weight-down { color: var(--color-success); }
+        .achieve-card  { background: linear-gradient(145deg, rgba(255,255,255,.7), rgba(168,160,200,.22)); }
+        .achieve-card  .summary-value { color: var(--color-weight); }
+        /* Sync status */
+        .sync-status {
+            font-size: var(--text-xs); color: var(--color-success);
+            opacity: 0; transition: opacity .3s;
+            font-weight: var(--font-bold);
+        }
+        .sync-status.show { opacity: 1; }
+        /* Dash quick filters */
+        .dash-quick-btns {
+            display: flex; gap: var(--space-2);
+        }
+        .dash-quick-btn {
+            padding: 4px var(--space-3); font-size: var(--text-xs);
+            border-radius: var(--radius-full); border: 1px solid var(--color-border);
+            background: rgba(255,255,255,.55); color: var(--color-text-secondary);
+            cursor: pointer; font-family: var(--font-family); font-weight: var(--font-bold);
+            transition: all var(--transition-fast);
+        }
+        .dash-quick-btn:hover, .dash-quick-btn.active {
+            background: var(--color-primary); color: white; border-color: var(--color-primary);
+        }
+        /* Target collapse chip */
+        .target-chip {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.8);
+            border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4);
+            margin-bottom: var(--space-4); cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+        .target-chip:hover { background: rgba(255,255,255,.8); }
+        .target-chip-info { font-size: var(--text-xs); color: var(--color-text-secondary); }
+        .target-chip-title { font-weight: var(--font-bold); color: var(--color-primary-dark); margin-bottom: 2px; font-size: var(--text-sm); }
+        .target-chip-edit { font-size: var(--text-xs); color: var(--color-primary); font-weight: var(--font-bold); white-space: nowrap; }
         .summary-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
         .dash-empty-msg {
             color: var(--color-text-muted); font-size: var(--text-base);
@@ -933,6 +988,9 @@
             </div>
             <button class="btn btn-primary btn-full btn-lg" onclick="handleLogin()">登入</button>
             <button class="btn btn-secondary btn-full" onclick="handleRegister()">註冊新帳號</button>
+            <div style="text-align:center;">
+                <button class="btn btn-ghost btn-sm" onclick="handleForgotPassword()" style="color:var(--color-text-muted);font-size:var(--text-xs);">忘記密碼？</button>
+            </div>
             <div id="authMsg"></div>
         </div>
     </div>
@@ -949,6 +1007,9 @@
                 <h3 id="monthTitle" class="month-title">月曆</h3>
                 <button class="btn btn-ghost btn-sm" onclick="changeMonth(1)">▶</button>
             </div>
+            <div id="streakBar" class="streak-bar" style="display:none;">
+                <span class="streak-badge" id="streakBadge">🔥 連續 0 天</span>
+            </div>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
     </div>
@@ -959,11 +1020,21 @@
         <div id="recordUI">
             <div class="panel-header">
                 <div id="statusTag" class="status-tag tag-today">今日紀錄</div>
-                <button id="cancelEditBtn" class="btn btn-ghost btn-sm" style="display:none;" onclick="switchToDate(todayDateStr)">✖ 取消補登</button>
+                <div style="display:flex;align-items:center;gap:var(--space-2);">
+                    <span class="sync-status" id="syncStatus">✓ 已同步</span>
+                    <button id="cancelEditBtn" class="btn btn-ghost btn-sm" style="display:none;" onclick="switchToDate(todayDateStr)">✖ 取消補登</button>
+                </div>
             </div>
 
-            <!-- Targets -->
-            <div class="compact-card">
+            <!-- Targets: collapsed chip or full form -->
+            <div id="targetChip" class="target-chip" onclick="toggleTargetForm()" style="display:none;">
+                <div>
+                    <div class="target-chip-title">🎯 個人目標</div>
+                    <div class="target-chip-info" id="targetChipInfo">--</div>
+                </div>
+                <span class="target-chip-edit">編輯 ✏️</span>
+            </div>
+            <div id="targetForm" class="compact-card">
                 <div class="compact-card-title">🎯 個人目標</div>
                 <div class="row">
                     <div>
@@ -975,7 +1046,7 @@
                         <input type="number" id="setPro" placeholder="例: 120">
                     </div>
                 </div>
-                <button class="btn btn-secondary btn-sm btn-full" onclick="saveTargets()">💾 更新目標</button>
+                <button class="btn btn-secondary btn-sm btn-full" onclick="saveTargets()">💾 儲存目標</button>
             </div>
 
             <!-- Weight -->
@@ -1044,10 +1115,7 @@
                     <input type="number" id="recPro" placeholder="0">
                 </div>
             </div>
-            <button class="btn btn-primary btn-full" onclick="addEntryToLog()">加入今日紀錄 ＋</button>
-
-            <div class="section-divider"></div>
-            <button class="btn btn-secondary btn-full btn-sm" onclick="settleToCalendar()" id="settleBtn">立即儲存紀錄 💾</button>
+            <button class="btn btn-primary btn-full" onclick="addEntryToLog()">加入紀錄 ＋</button>
 
             <!-- Food Log -->
             <div style="margin-top:var(--space-4);" id="todayFoodListWrapper">
@@ -1094,12 +1162,110 @@
 
 <!-- WORKOUT TAB -->
 <div id="workoutTab" class="tab-content" style="display:none;">
-    <div class="workout-container">
-        <div class="workout-header">
-            <h2>📋 訓練課表</h2>
-            <button class="btn btn-primary btn-sm" onclick="addWorkoutProgram()" style="background:var(--color-workout);border-color:var(--color-workout);">＋ 新增課表</button>
+    <div class="calendar-section">
+        <div class="calendar-header">
+            <div class="calendar-nav-group">
+                <button class="btn btn-ghost btn-sm" onclick="workoutChangeMonth(-1)">◀</button>
+                <h3 id="workoutMonthTitle" class="month-title"></h3>
+                <button class="btn btn-ghost btn-sm" onclick="workoutChangeMonth(1)">▶</button>
+            </div>
         </div>
-        <div id="workoutProgramsContainer"></div>
+        <div class="calendar-grid" id="workoutCalendarGrid"></div>
+    </div>
+    <div class="input-section" id="workoutPanel">
+
+        <!-- ── RECORD MODE ── -->
+        <div id="woRecordUI">
+            <div class="panel-header">
+                <div id="workoutStatusTag" class="status-tag tag-today">今日訓練</div>
+                <div style="display:flex;align-items:center;gap:var(--space-2);">
+                    <span class="sync-status" id="workoutSyncStatus">✓ 已同步</span>
+                    <button id="cancelWorkoutEditBtn" class="btn btn-ghost btn-sm" style="display:none;" onclick="switchToWorkoutDate(window.todayDateStr)">✖ 取消補登</button>
+                    <button class="btn btn-ghost btn-sm" onclick="toggleWorkoutMode('manage')" style="color:var(--color-workout);font-size:var(--text-xs);">🗂️ 菜單管理</button>
+                </div>
+            </div>
+
+            <!-- Quick-select from menu (hidden until menu exists) -->
+            <div class="input-group" id="woQuickSection" style="display:none;">
+                <label>快速選擇菜單</label>
+                <div class="row" style="margin-bottom:0;">
+                    <select id="woQGroup" onchange="woUpdateQItems()"></select>
+                    <select id="woQItem" onchange="woAutoFillFromItem()"></select>
+                </div>
+            </div>
+
+            <!-- Manual / auto-filled entry form -->
+            <div class="input-group">
+                <label>訓練動作名稱</label>
+                <input type="text" id="woRecName" placeholder="例：槓鈴臥推">
+            </div>
+            <div class="row">
+                <div>
+                    <label>重量</label>
+                    <div style="display:flex;gap:var(--space-2);">
+                        <input type="number" id="woRecWeight" step=".1" placeholder="0" style="flex:1;min-width:0;">
+                        <select id="woRecUnit" class="wo-unit-sel"><option value="kg">kg</option><option value="lb">lb</option></select>
+                    </div>
+                </div>
+                <div>
+                    <label>RM 次數</label>
+                    <input type="number" id="woRecRm" placeholder="0">
+                </div>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="addWorkoutEntry()" style="background:var(--color-workout);border-color:var(--color-workout);">加入紀錄 ＋</button>
+
+            <!-- Exercise Log -->
+            <div style="margin-top:var(--space-4);">
+                <div class="log-section-title">今日已選</div>
+                <div id="woExerciseList"></div>
+            </div>
+            <div class="wo-volume-summary" id="woVolumeSummary" style="display:none;margin-top:var(--space-3);"></div>
+        </div>
+
+        <!-- ── MANAGE MODE ── -->
+        <div id="woManageUI" style="display:none;">
+            <div class="panel-header">
+                <div class="status-tag tag-manage">🗂️ 訓練菜單管理</div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-title">📁 1. 建立新群組</div>
+                <div style="display:flex;gap:var(--space-3);">
+                    <input type="text" id="woNewGroupName" placeholder="群組名稱（例：胸、背、腿）" style="flex:1;">
+                    <button class="btn btn-primary btn-sm" onclick="addWorkoutMenuGroup()" style="background:var(--color-workout);border-color:var(--color-workout);flex-shrink:0;">新增</button>
+                </div>
+            </div>
+
+            <div class="compact-card">
+                <div class="compact-card-title">➕ 2. 加入訓練項目至群組</div>
+                <div class="input-group">
+                    <label>選擇群組</label>
+                    <select id="woMGroupSelect"><option value="">-- 先選擇群組 --</option></select>
+                </div>
+                <div class="input-group">
+                    <label>訓練項目名稱</label>
+                    <input type="text" id="woMName" placeholder="例：槓鈴臥推">
+                </div>
+                <div class="row">
+                    <div>
+                        <label>重量</label>
+                        <div style="display:flex;gap:var(--space-2);">
+                            <input type="number" id="woMWeight" step=".1" placeholder="0" style="flex:1;min-width:0;">
+                            <select id="woMUnit" class="wo-unit-sel"><option value="kg">kg</option><option value="lb">lb</option></select>
+                        </div>
+                    </div>
+                    <div>
+                        <label>RM 次數</label>
+                        <input type="number" id="woMRm" placeholder="0">
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full btn-sm" onclick="saveToWorkoutMenu()" style="background:var(--color-workout);border-color:var(--color-workout);">儲存到清單 ＋</button>
+            </div>
+
+            <button class="btn btn-ghost btn-sm" onclick="toggleWorkoutMode('record')" style="margin-bottom:var(--space-3);">← 返回訓練記錄</button>
+            <div id="woMenuListView"></div>
+        </div>
+
     </div>
 </div>
 
@@ -1111,6 +1277,11 @@
             <input type="date" id="dashStartDate" onchange="applyDateFilter()">
             <span class="date-range-sep">→</span>
             <input type="date" id="dashEndDate" onchange="applyDateFilter()">
+        </div>
+        <div class="dash-quick-btns">
+            <button class="dash-quick-btn" id="qbtn7"   onclick="setDateRange(7)">近 7 天</button>
+            <button class="dash-quick-btn" id="qbtn30"  onclick="setDateRange(30)">近 30 天</button>
+            <button class="dash-quick-btn" id="qbtnMonth" onclick="setDateRange('month')">本月</button>
         </div>
     </div>
     <div class="dashboard-content">
@@ -1143,13 +1314,21 @@
                     <div class="summary-sub" id="weightDetails">--</div>
                 </div>
             </div>
+            <div class="summary-card achieve-card">
+                <div class="card-accent-bar"></div>
+                <div class="card-body">
+                    <div class="summary-title">目標達成天數</div>
+                    <div class="summary-value" id="achieveDays">--</div>
+                    <div class="summary-sub" id="achieveSub">熱量在目標 ±10%</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -1172,17 +1351,20 @@
     let allDailyData = {};
     let monthData = {};
     let customMenu = {};
-    let workoutPrograms = [];
-    let currentProgramIdx = -1;
-    let expandedParts = new Set();
+    let workoutData = {};    // { dateStr: { parts: [{ name, exercises:[{name,weight,unit,rm}] }] } }
+    let workoutMenu = {};    // { groupName: [{ name, weight, unit, rm }] }
     let isDataLoaded = false;
     let myChart = null;
+    let activeQuickBtn = null;
 
     const now = new Date();
     let currentYear = now.getFullYear();
     let currentMonth = now.getMonth();
+    let workoutYear = now.getFullYear();
+    let workoutMonth = now.getMonth();
     const todayDateStr = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
     let editingDate = todayDateStr;
+    let workoutEditingDate = todayDateStr;
     window.todayDateStr = todayDateStr;
 
     // ============================================================
@@ -1248,7 +1430,7 @@
         document.getElementById('tabBtnNutrition').className   = tab === 'nutrition'  ? 'tab-btn active'           : 'tab-btn';
         document.getElementById('tabBtnWorkout').className     = tab === 'workout'    ? 'tab-btn workout-active'   : 'tab-btn';
         document.getElementById('tabBtnDashboard').className   = tab === 'dashboard'  ? 'tab-btn dashboard-active' : 'tab-btn';
-        if (tab === 'workout')   renderWorkoutUI();
+        if (tab === 'workout')   { toggleWorkoutMode('record'); renderWorkoutCalendar(); }
         if (tab === 'dashboard') processAndRenderChart();
     };
 
@@ -1267,6 +1449,91 @@
             document.getElementById('topNav').style.display = 'none';
         }
     });
+
+    // ── Sync status flash ──
+    function showSyncStatus() {
+        const el = document.getElementById('syncStatus');
+        if (!el) return;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    // ── Forgot password ──
+    window.handleForgotPassword = async () => {
+        const e = document.getElementById('authEmail').value.trim();
+        if (!e) { document.getElementById('authMsg').innerText = '請先輸入電子郵件地址。'; return; }
+        try {
+            await sendPasswordResetEmail(auth, e);
+            document.getElementById('authMsg').style.color = 'var(--color-success)';
+            document.getElementById('authMsg').innerText = '✅ 密碼重設郵件已送出，請查收信箱。';
+        } catch (err) {
+            document.getElementById('authMsg').style.color = 'var(--color-danger)';
+            document.getElementById('authMsg').innerText = '發送失敗：' + err.message;
+        }
+    };
+
+    // ── Target chip toggle ──
+    function updateTargetChip() {
+        const chip = document.getElementById('targetChip');
+        const form = document.getElementById('targetForm');
+        if (myTargets.tdee > 0 && myTargets.pro > 0) {
+            document.getElementById('targetChipInfo').innerText = `熱量 ${myTargets.tdee} kcal　蛋白質 ${myTargets.pro} g`;
+            chip.style.display = 'flex';
+            form.style.display = 'none';
+        } else {
+            chip.style.display = 'none';
+            form.style.display = 'block';
+        }
+    }
+    window.toggleTargetForm = () => {
+        const form = document.getElementById('targetForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // ── Streak ──
+    function computeStreak() {
+        const now2 = new Date();
+        let streak = 0;
+        for (let i = 0; i <= 365; i++) {
+            const d = new Date(now2); d.setDate(d.getDate() - i);
+            const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            if (monthData[key] && monthData[key].cal > 0) {
+                streak++;
+            } else if (i === 0) {
+                // today not yet logged — don't break streak, check yesterday
+            } else {
+                break;
+            }
+        }
+        const bar = document.getElementById('streakBar');
+        const badge = document.getElementById('streakBadge');
+        if (streak > 0) {
+            bar.style.display = 'flex';
+            badge.textContent = `🔥 連續 ${streak} 天`;
+        } else {
+            bar.style.display = 'none';
+        }
+    }
+
+
+    // ── Dashboard quick date range ──
+    window.setDateRange = (type) => {
+        const t = new Date();
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        let start;
+        if (type === 'month') {
+            start = new Date(t.getFullYear(), t.getMonth(), 1);
+        } else {
+            start = new Date(t); start.setDate(t.getDate() - (type - 1));
+        }
+        document.getElementById('dashStartDate').value = fmt(start);
+        document.getElementById('dashEndDate').value   = fmt(t);
+        // highlight active btn
+        ['qbtn7','qbtn30','qbtnMonth'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+        const map = { 7:'qbtn7', 30:'qbtn30', month:'qbtnMonth' };
+        if (map[type]) document.getElementById(map[type])?.classList.add('active');
+        processAndRenderChart();
+    };
 
     window.handleLogin = async () => {
         const e = document.getElementById('authEmail').value;
@@ -1293,13 +1560,14 @@
             const docSnap = await getDoc(doc(db, 'users', currentUserUID));
             if (docSnap.exists()) {
                 const d = docSnap.data();
-                myTargets       = d.targets        || { tdee: 0, pro: 0 };
-                allDailyData    = d.allDailyData   || {};
-                monthData       = d.monthData      || {};
-                customMenu      = d.customMenu     || {};
-                workoutPrograms = d.workoutPrograms || [];
+                myTargets        = d.targets         || { tdee: 0, pro: 0 };
+                allDailyData     = d.allDailyData    || {};
+                monthData        = d.monthData       || {};
+                customMenu       = d.customMenu      || {};
+                workoutData      = d.workoutData     || {};
+                workoutMenu      = d.workoutMenu     || {};
             } else {
-                myTargets = { tdee: 0, pro: 0 }; allDailyData = {}; monthData = {}; customMenu = {}; workoutPrograms = [];
+                myTargets = { tdee: 0, pro: 0 }; allDailyData = {}; monthData = {}; customMenu = {}; workoutData = {}; workoutMenu = {};
             }
             document.getElementById('setTDEE').value = myTargets.tdee || '';
             document.getElementById('setPro').value  = myTargets.pro  || '';
@@ -1318,8 +1586,9 @@
         }
         try {
             await setDoc(doc(db, 'users', currentUserUID), {
-                targets: myTargets, allDailyData, monthData, customMenu, workoutPrograms
+                targets: myTargets, allDailyData, monthData, customMenu, workoutData, workoutMenu
             }, { merge: true });
+            showSyncStatus();
         } catch (err) {
             console.error('儲存失敗：', err);
             alert('存檔失敗，請檢查網路連線。');
@@ -1342,162 +1611,379 @@
     // ============================================================
     // WORKOUT LOGIC
     // ============================================================
-    window.addWorkoutProgram = async () => {
-        const name = prompt('請輸入新訓練課表名稱：');
-        if (!name?.trim()) return;
-        workoutPrograms.push({ name: name.trim(), parts: [] });
-        currentProgramIdx = workoutPrograms.length - 1;
-        expandedParts.clear();
-        await syncToDB(); renderWorkoutUI();
+    window.workoutChangeMonth = (offset) => {
+        workoutMonth += offset;
+        if (workoutMonth < 0)  { workoutMonth = 11; workoutYear--; }
+        if (workoutMonth > 11) { workoutMonth = 0;  workoutYear++; }
+        renderWorkoutCalendar();
     };
 
-    window.deleteProgram = async (idx, e) => {
-        e.stopPropagation();
-        if (!confirm(`確定要刪除課表「${workoutPrograms[idx].name}」嗎？`)) return;
-        workoutPrograms.splice(idx, 1);
-        if (currentProgramIdx === idx) { currentProgramIdx = -1; expandedParts.clear(); }
-        else if (currentProgramIdx > idx) currentProgramIdx--;
-        await syncToDB(); renderWorkoutUI();
-    };
-
-    window.selectProgram = (idx) => {
-        currentProgramIdx = (currentProgramIdx === idx) ? -1 : idx;
-        expandedParts.clear(); renderWorkoutUI();
-    };
-
-    window.addPart = async () => {
-        if (currentProgramIdx === -1) return;
-        const name = prompt('請輸入訓練部位：');
-        if (!name?.trim()) return;
-        workoutPrograms[currentProgramIdx].parts.push({ name: name.trim(), exercises: [] });
-        expandedParts.add(workoutPrograms[currentProgramIdx].parts.length - 1);
-        await syncToDB(); renderWorkoutUI();
-    };
-
-    window.deletePart = async (ptIdx, e) => {
-        e.stopPropagation();
-        if (!confirm(`確定要刪除部位「${workoutPrograms[currentProgramIdx].parts[ptIdx].name}」？`)) return;
-        workoutPrograms[currentProgramIdx].parts.splice(ptIdx, 1);
-        expandedParts.delete(ptIdx);
-        await syncToDB(); renderWorkoutUI();
-    };
-
-    window.deleteExercise = async (ptIdx, exIdx) => {
-        const nm = workoutPrograms[currentProgramIdx].parts[ptIdx].exercises[exIdx].name || '此項目';
-        if (!confirm(`確定要刪除「${nm}」嗎？`)) return;
-        workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.splice(exIdx, 1);
-        await syncToDB(); renderWorkoutUI();
-    };
-
-    window.updateExField = (ptIdx, exIdx, field, el) => {
-        let val = el.value;
-        if (field !== 'name') {
-            val = val === '' ? '' : (field === 'weight' ? parseFloat(val) : parseInt(val, 10));
-            if (isNaN(val)) { val = ''; el.value = ''; }
+    window.switchToWorkoutDate = (dateStr) => {
+        workoutEditingDate = dateStr;
+        const isToday = dateStr === todayDateStr;
+        const stEl = document.getElementById('workoutStatusTag');
+        if (stEl) {
+            stEl.className = isToday ? 'status-tag tag-today' : 'status-tag tag-edit';
+            stEl.innerText = isToday ? '今日訓練' : `補登：${dateStr.split('-')[2]} 日`;
         }
-        workoutPrograms[currentProgramIdx].parts[ptIdx].exercises[exIdx][field] = val;
+        const cancelBtn = document.getElementById('cancelWorkoutEditBtn');
+        if (cancelBtn) cancelBtn.style.display = isToday ? 'none' : 'inline-flex';
+        // show record mode in case manage mode was open
+        toggleWorkoutMode('record');
+        renderWorkoutCalendar();
+        if (window.innerWidth <= 900) window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    function renderWorkoutCalendar() {
+        const grid = document.getElementById('workoutCalendarGrid');
+        if (!grid) return;
+        const titleEl = document.getElementById('workoutMonthTitle');
+        if (titleEl) titleEl.innerText = `${workoutYear} 年 ${workoutMonth + 1} 月`;
+        grid.innerHTML = ['日','一','二','三','四','五','六'].map(d => `<div class="weekday">${d}</div>`).join('');
+        const firstDay    = new Date(workoutYear, workoutMonth, 1).getDay();
+        const daysInMonth = new Date(workoutYear, workoutMonth + 1, 0).getDate();
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${workoutYear}-${workoutMonth}-${d}`;
+            const dayData = workoutData[dateStr];
+            const exArr  = dayData?.exercises || (dayData?.parts || []).flatMap(p => p.exercises || []);
+            const hasEx  = exArr.length > 0;
+            const cell = document.createElement('div');
+            cell.className = [
+                'day-cell',
+                hasEx                          ? 'has-data'       : '',
+                dateStr === todayDateStr       ? 'today'          : '',
+                dateStr === workoutEditingDate ? 'editing-target' : ''
+            ].filter(Boolean).join(' ');
+            const vol = hasEx ? calcDayVolume(dateStr) : 0;
+            let inner = `<div class="date-num">${d}</div>`;
+            if (hasEx) {
+                inner += `<div class="day-data wo-cell-parts">`;
+                inner += `<div class="wo-cell-part">🏋️ ${exArr.length} 項動作</div>`;
+                if (vol > 0) inner += `<div class="wo-cell-part" style="color:var(--color-text-muted);">${vol >= 1000 ? (vol/1000).toFixed(1)+'k' : vol}kg</div>`;
+                inner += `</div>`;
+            }
+            inner += `<div class="cell-btns"><button class="mini-btn mini-btn-edit" onclick="switchToWorkoutDate('${dateStr}')">📝</button></div>`;
+            cell.innerHTML = inner;
+            grid.appendChild(cell);
+        }
+    }
+
+    function renderWorkoutPanel(dateStr) {
+        const listEl = document.getElementById('woExerciseList');
+        if (!listEl) return;
+        // flatten old parts-based data for display
+        const rawData = workoutData[dateStr];
+        const exercises = rawData?.exercises
+            || (rawData?.parts || []).flatMap(p => p.exercises || []);
+
+        const volEl = document.getElementById('woVolumeSummary');
+
+        if (!exercises || exercises.length === 0) {
+            listEl.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏋️</div>
+                    <div class="empty-state-title">尚無訓練記錄</div>
+                    <div class="empty-state-body">從菜單快速選擇或手動輸入，開始記錄今日訓練</div>
+                </div>`;
+            if (volEl) volEl.style.display = 'none';
+            updateWoQuickSelects();
+            return;
+        }
+
+        // column header
+        let html = `
+            <div class="wo-col-labels">
+                <div class="wo-col-label">訓練項目</div>
+                <div class="wo-col-label">重量 / 單位</div>
+                <div class="wo-col-label">RM 次</div>
+                <div class="wo-col-label"></div>
+            </div>`;
+
+        exercises.forEach((ex, exIdx) => {
+            const unit = ex.unit || 'kg';
+            const wVal = ex.weight !== '' && ex.weight !== undefined ? ex.weight : '';
+            const rVal = ex.rm     !== '' && ex.rm     !== undefined ? ex.rm     : '';
+            html += `
+                <div class="wo-ex-row">
+                    <input class="wo-ex-input" type="text"
+                        value="${(ex.name||'').replace(/"/g,'&quot;')}"
+                        placeholder="例：槓鈴臥推"
+                        onchange="updateWorkoutEx('${dateStr}',${exIdx},'name',this.value)">
+                    <div class="wo-weight-cell">
+                        <input class="wo-ex-input" type="number" step=".1"
+                            value="${wVal}" placeholder="0"
+                            onchange="updateWorkoutEx('${dateStr}',${exIdx},'weight',this.value)">
+                        <button class="wo-unit-btn${unit==='lb'?' lb':''}"
+                            onclick="toggleExUnit('${dateStr}',${exIdx})">${unit}</button>
+                    </div>
+                    <input class="wo-ex-input" type="number" step="1"
+                        value="${rVal}" placeholder="0"
+                        onchange="updateWorkoutEx('${dateStr}',${exIdx},'rm',this.value)">
+                    <button class="wo-del-btn" onclick="deleteWorkoutEx('${dateStr}',${exIdx})">✕</button>
+                </div>`;
+        });
+        listEl.innerHTML = html;
+
+        // Volume summary
+        const vol = calcDayVolume(dateStr);
+        if (volEl) {
+            if (vol > 0) {
+                volEl.style.display = 'flex';
+                volEl.innerHTML = `🏋️&nbsp;總訓練容量：<span class="wo-volume-num">${vol.toLocaleString()}</span>&thinsp;kg<span style="color:var(--color-text-muted);font-size:var(--text-xs);margin-left:var(--space-3);">${exercises.length} 個動作</span>`;
+            } else {
+                volEl.style.display = 'none';
+            }
+        }
+
+        updateWoQuickSelects();
+    }
+
+    // ── Volume calculation (lb auto-converted to kg) ──
+    function calcDayVolume(dateStr) {
+        const rawData = workoutData[dateStr];
+        const exercises = rawData?.exercises
+            || (rawData?.parts || []).flatMap(p => p.exercises || []);
+        let total = 0;
+        exercises.forEach(ex => {
+            const w = parseFloat(ex.weight) || 0;
+            const r = parseInt(ex.rm) || 0;
+            const wKg = (ex.unit === 'lb') ? w * 0.453592 : w;
+            total += wKg * r;
+        });
+        return Math.round(total);
+    }
+
+    // ── Toggle unit on existing exercise ──
+    window.toggleExUnit = async (dateStr, exIdx) => {
+        const exercises = workoutData[dateStr]?.exercises;
+        const ex = exercises?.[exIdx];
+        if (!ex) return;
+        ex.unit = (ex.unit === 'lb') ? 'kg' : 'lb';
+        await syncToDB();
+        renderWorkoutPanel(dateStr);
+    };
+
+    function showWorkoutSyncStatus() {
+        const el = document.getElementById('workoutSyncStatus');
+        if (!el) return;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    window.addWorkoutEntry = async () => {
+        const name   = document.getElementById('woRecName')?.value.trim() || '';
+        const weightEl = document.getElementById('woRecWeight');
+        const unit   = document.getElementById('woRecUnit')?.value || 'kg';
+        const rmEl   = document.getElementById('woRecRm');
+        if (!name) { alert('請輸入訓練動作名稱！'); return; }
+        const dateStr = workoutEditingDate;
+        if (!workoutData[dateStr]) workoutData[dateStr] = { exercises: [] };
+        if (!workoutData[dateStr].exercises) workoutData[dateStr].exercises = [];
+        const weight = weightEl?.value === '' ? '' : parseFloat(weightEl.value) || '';
+        const rm     = rmEl?.value     === '' ? '' : parseInt(rmEl.value, 10)   || '';
+        workoutData[dateStr].exercises.push({ name, weight, unit, rm });
+        await syncToDB();
+        showWorkoutSyncStatus();
+        // clear name only; keep weight/unit/rm for consecutive entries
+        if (document.getElementById('woRecName')) document.getElementById('woRecName').value = '';
+        renderWorkoutCalendar();
+        renderWorkoutPanel(dateStr);
+    };
+
+    window.deleteWorkoutEx = async (dateStr, exIdx) => {
+        const exercises = workoutData[dateStr]?.exercises;
+        if (!exercises) return;
+        exercises.splice(exIdx, 1);
+        if (exercises.length === 0) delete workoutData[dateStr];
+        await syncToDB();
+        renderWorkoutCalendar();
+        renderWorkoutPanel(dateStr);
+    };
+
+    window.updateWorkoutEx = (dateStr, exIdx, field, val) => {
+        const ex = workoutData[dateStr]?.exercises?.[exIdx];
+        if (!ex) return;
+        if      (field === 'name')   ex.name   = val;
+        else if (field === 'weight') ex.weight = val === '' ? '' : parseFloat(val) || '';
+        else if (field === 'rm')     ex.rm     = val === '' ? '' : parseInt(val, 10) || '';
         syncToDB();
     };
 
-    window.submitNewExercise = async (ptIdx) => {
-        const nameEl   = document.getElementById(`newExName_${ptIdx}`);
-        const weightEl = document.getElementById(`newExWeight_${ptIdx}`);
-        const rmEl     = document.getElementById(`newExRm_${ptIdx}`);
-        const setsEl   = document.getElementById(`newExSets_${ptIdx}`);
-        const name = nameEl.value.trim();
-        if (!name) { alert('請輸入項目名稱！'); return; }
-        let weight = weightEl.value === '' ? '' : parseFloat(weightEl.value);
-        if (isNaN(weight)) weight = '';
-        let rm   = rmEl.value   === '' ? '' : parseInt(rmEl.value,   10); if (isNaN(rm))   rm   = '';
-        let sets = setsEl.value === '' ? '' : parseInt(setsEl.value, 10); if (isNaN(sets)) sets = '';
-        workoutPrograms[currentProgramIdx].parts[ptIdx].exercises.push({ name, weight, rm, sets });
-        await syncToDB(); renderWorkoutUI();
-    };
-
-    window.togglePart = (ptIdx) => {
-        expandedParts.has(ptIdx) ? expandedParts.delete(ptIdx) : expandedParts.add(ptIdx);
-        renderWorkoutUI();
-    };
-
-    function renderWorkoutUI() {
-        const container = document.getElementById('workoutProgramsContainer');
-        if (!container) return;
-        let html = '';
-
-        if (workoutPrograms.length === 0) {
-            html = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <div class="empty-state-title">尚無訓練課表</div>
-                    <div class="empty-state-body">點擊右上方「＋ 新增課表」開始建立您的專屬訓練計畫</div>
-                </div>`;
+    // ── Workout Menu Management ──
+    window.toggleWorkoutMode = (mode) => {
+        const rec = document.getElementById('woRecordUI');
+        const mgr = document.getElementById('woManageUI');
+        if (mode === 'manage') {
+            if (rec) rec.style.display = 'none';
+            if (mgr) { mgr.style.display = 'block'; renderWorkoutManage(); }
+        } else {
+            if (rec) rec.style.display = 'block';
+            if (mgr) mgr.style.display = 'none';
+            renderWorkoutPanel(workoutEditingDate);
         }
+    };
 
-        workoutPrograms.forEach((prog, pIdx) => {
-            const isActive = (currentProgramIdx === pIdx);
-            html += `
-            <div style="margin-bottom:var(--space-4);">
-                <div class="prog-card ${isActive ? 'active' : ''}" onclick="selectProgram(${pIdx})">
-                    <span class="prog-title">
-                        <span class="toggle-icon ${isActive ? 'expanded' : ''}">▶</span>${prog.name}
-                    </span>
-                    <button class="btn-icon" onclick="deleteProgram(${pIdx}, event)">🗑️</button>
+    function renderWorkoutManage() {
+        const view = document.getElementById('woMenuListView');
+        if (!view) return;
+        view.innerHTML = '';
+        const entries = Object.entries(workoutMenu);
+        if (entries.length === 0) {
+            view.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗂️</div>
+                    <div class="empty-state-title">尚無訓練菜單</div>
+                    <div class="empty-state-body">在上方新增群組開始建立訓練菜單</div>
                 </div>`;
+            return;
+        }
+        entries.forEach(([g, items]) => {
+            const safeG = g.replace(/'/g, "\\'");
+            const wrapper = document.createElement('div');
+            wrapper.style.marginBottom = 'var(--space-2)';
 
-            if (isActive) {
-                html += `<div class="prog-detail-area">`;
-                if (prog.parts.length === 0) {
-                    html += `<div style="text-align:center;color:var(--color-text-muted);padding:var(--space-6);">此課表尚無訓練部位</div>`;
-                }
-                prog.parts.forEach((part, ptIdx) => {
-                    const expanded = expandedParts.has(ptIdx);
-                    html += `
-                        <div class="part-container">
-                            <div class="part-header ${expanded ? 'active' : ''}" onclick="togglePart(${ptIdx})">
-                                <h3><span class="toggle-icon ${expanded ? 'expanded' : ''}">▶</span>${part.name}</h3>
-                                <button class="btn-icon" onclick="deletePart(${ptIdx}, event)">✖</button>
-                            </div>
-                            <div class="part-content ${expanded ? 'expanded' : ''}">
-                                <div id="exList_${ptIdx}">`;
+            const header = document.createElement('div');
+            header.className = 'menu-group-header';
+            header.innerHTML = `<span>📂 ${g}</span><button class="btn btn-danger-ghost btn-sm" onclick="deleteWorkoutMenuGroup('${safeG}')">🗑️ 刪除群組</button>`;
+            wrapper.appendChild(header);
 
-                    part.exercises.forEach((ex, exIdx) => {
-                        html += `
-                            <div class="ex-row">
-                                <div><span class="ex-label">項目</span><input type="text" placeholder="槓鈴臥推" value="${ex.name}" onchange="updateExField(${ptIdx},${exIdx},'name',this)"></div>
-                                <div><span class="ex-label">重量 kg</span><input type="number" step=".1" placeholder="0" value="${ex.weight}" onchange="updateExField(${ptIdx},${exIdx},'weight',this)"></div>
-                                <div><span class="ex-label">RM 次</span><input type="number" step="1" placeholder="0" value="${ex.rm}" onchange="updateExField(${ptIdx},${exIdx},'rm',this)"></div>
-                                <div><span class="ex-label">組數</span><input type="number" step="1" placeholder="0" value="${ex.sets}" onchange="updateExField(${ptIdx},${exIdx},'sets',this)"></div>
-                                <button class="btn-icon" onclick="deleteExercise(${ptIdx},${exIdx})">🗑️</button>
-                            </div>`;
-                    });
-
-                    html += `
-                                </div>
-                                <div class="ex-row ex-row-new">
-                                    <div><span class="ex-label" style="color:var(--color-primary);">新項目</span><input type="text" id="newExName_${ptIdx}" placeholder="例：槓鈴臥推"></div>
-                                    <div><span class="ex-label">重量 kg</span><input type="number" id="newExWeight_${ptIdx}" step=".1" placeholder="0"></div>
-                                    <div><span class="ex-label">RM 次</span><input type="number" id="newExRm_${ptIdx}" step="1" placeholder="0"></div>
-                                    <div><span class="ex-label">組數</span><input type="number" id="newExSets_${ptIdx}" step="1" placeholder="0"></div>
-                                    <button class="btn btn-primary btn-sm" onclick="submitNewExercise(${ptIdx})" style="background:var(--color-workout);align-self:flex-end;">＋ 加入</button>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                html += `<button class="btn btn-secondary btn-full" onclick="addPart()" style="margin-top:var(--space-2);">＋ 新增訓練部位</button>`;
-                html += `</div>`;
-            }
-            html += `</div>`;
+            const list = document.createElement('div');
+            list.className = 'menu-group-list';
+            items.forEach((item, idx) => {
+                const wLabel = item.weight !== '' && item.weight !== undefined ? `${item.weight} ${item.unit || 'kg'}` : '--';
+                const rLabel = item.rm !== '' && item.rm !== undefined ? `${item.rm} 次` : '--';
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerHTML = `<span><strong>${item.name}</strong> <small style="color:var(--color-text-muted)">⚖️${wLabel} &nbsp;·&nbsp; 🔁${rLabel}</small></span><button class="btn btn-danger-ghost btn-sm" onclick="deleteWorkoutMenuItem('${safeG}',${idx})" style="padding:2px 6px;">✕</button>`;
+                list.appendChild(div);
+            });
+            wrapper.appendChild(list);
+            view.appendChild(wrapper);
         });
-        container.innerHTML = html;
+        updateWoManageGroupSelect();
     }
+
+    function updateWoManageGroupSelect() {
+        const mgr = document.getElementById('woMGroupSelect');
+        if (mgr) {
+            const prev = mgr.value;
+            mgr.innerHTML = '<option value="">-- 先選擇群組 --</option>';
+            Object.keys(workoutMenu).forEach(g => {
+                const o = document.createElement('option');
+                o.value = o.innerText = g;
+                mgr.appendChild(o);
+            });
+            if (prev && workoutMenu[prev]) mgr.value = prev;
+        }
+    }
+
+    window.addWorkoutMenuGroup = async () => {
+        const nameEl = document.getElementById('woNewGroupName');
+        const name = nameEl ? nameEl.value.trim() : '';
+        if (!name) { alert('請輸入群組名稱！'); return; }
+        if (workoutMenu[name]) { alert('群組名稱已存在！'); return; }
+        workoutMenu[name] = [];
+        await syncToDB();
+        if (nameEl) nameEl.value = '';
+        renderWorkoutManage();
+        updateWoManageGroupSelect();
+        updateWoQuickSelects();
+    };
+
+    window.deleteWorkoutMenuGroup = async (g) => {
+        if (!confirm(`確定要刪除群組「${g}」及所有項目？`)) return;
+        delete workoutMenu[g];
+        await syncToDB();
+        renderWorkoutManage();
+        updateWoQuickSelects();
+    };
+
+    window.saveToWorkoutMenu = async () => {
+        const gSel     = document.getElementById('woMGroupSelect');
+        const nameEl   = document.getElementById('woMName');
+        const weightEl = document.getElementById('woMWeight');
+        const unitEl   = document.getElementById('woMUnit');
+        const rmEl     = document.getElementById('woMRm');
+        const g    = gSel ? gSel.value : '';
+        const name = nameEl ? nameEl.value.trim() : '';
+        if (!g)    { alert('請先選擇群組！'); return; }
+        if (!name) { alert('請輸入訓練項目名稱！'); return; }
+        const weight = weightEl?.value === '' ? '' : parseFloat(weightEl.value) || '';
+        const unit   = unitEl?.value || 'kg';
+        const rm     = rmEl?.value   === '' ? '' : parseInt(rmEl.value, 10) || '';
+        if (!workoutMenu[g]) workoutMenu[g] = [];
+        workoutMenu[g].push({ name, weight, unit, rm });
+        await syncToDB();
+        if (nameEl)   nameEl.value   = '';
+        if (weightEl) weightEl.value = '';
+        if (rmEl)     rmEl.value     = '';
+        renderWorkoutManage();
+        updateWoQuickSelects();
+    };
+
+    window.deleteWorkoutMenuItem = async (g, idx) => {
+        if (!workoutMenu[g]) return;
+        workoutMenu[g].splice(idx, 1);
+        await syncToDB();
+        renderWorkoutManage();
+        updateWoQuickSelects();
+    };
+
+    // ── Quick-select helpers ──
+    function updateWoQuickSelects() {
+        const qSect = document.getElementById('woQuickSection');
+        if (!qSect) return;
+        const hasMenu = Object.keys(workoutMenu).length > 0;
+        qSect.style.display = hasMenu ? 'block' : 'none';
+        if (!hasMenu) return;
+        const gSel = document.getElementById('woQGroup');
+        if (gSel) {
+            const prev = gSel.value;
+            gSel.innerHTML = Object.keys(workoutMenu).map(g => `<option value="${g.replace(/"/g,'&quot;')}">${g}</option>`).join('');
+            if (prev && workoutMenu[prev]) gSel.value = prev;
+        }
+        window.woUpdateQItems();
+    }
+    window.woUpdateQItems = () => {
+        const gSel = document.getElementById('woQGroup');
+        const iSel = document.getElementById('woQItem');
+        if (!gSel || !iSel) return;
+        const g = gSel.value;
+        iSel.innerHTML = (workoutMenu[g] || []).map((item, idx) => {
+            const w = item.weight !== '' && item.weight !== undefined ? ` ${item.weight}${item.unit||'kg'}` : '';
+            const r = item.rm !== '' && item.rm !== undefined ? ` · ${item.rm}次` : '';
+            return `<option value="${idx}">${item.name}${w}${r}</option>`;
+        }).join('');
+        window.woAutoFillFromItem();
+    };
+    window.woAutoFillFromItem = () => {
+        const gSel = document.getElementById('woQGroup');
+        const iSel = document.getElementById('woQItem');
+        if (!gSel || !iSel) return;
+        const item = (workoutMenu[gSel.value] || [])[parseInt(iSel.value)];
+        if (!item) return;
+        const n = document.getElementById('woRecName');
+        const w = document.getElementById('woRecWeight');
+        const u = document.getElementById('woRecUnit');
+        const r = document.getElementById('woRecRm');
+        if (n) n.value = item.name;
+        if (w) w.value = item.weight !== '' && item.weight !== undefined ? item.weight : '';
+        if (u) u.value = item.unit || 'kg';
+        if (r) r.value = item.rm   !== '' && item.rm   !== undefined ? item.rm   : '';
+    };
 
     // ============================================================
     // NUTRITION LOGIC
     // ============================================================
     function initAppUI() {
         document.getElementById('monthTitle').innerText = `${currentYear} 年 ${currentMonth + 1} 月`;
+        updateTargetChip();
         renderCalendar(); updateSelectors(); window.switchToDate(todayDateStr);
         initDashboardDates();
+        // init workout calendar title (panel rendered on tab switch)
+        const wt = document.getElementById('workoutMonthTitle');
+        if (wt) wt.innerText = `${workoutYear} 年 ${workoutMonth + 1} 月`;
     }
 
     window.changeMonth = (offset) => {
@@ -1514,7 +2000,7 @@
         await syncToDB();
         const data = allDailyData[editingDate] || { cal: 0, pro: 0 };
         updateRings(data.cal, data.pro);
-        alert('目標已儲存！');
+        updateTargetChip();
     };
 
     window.saveWeight = async () => {
@@ -1730,24 +2216,9 @@
         container.innerHTML = html;
     }
 
-    window.settleToCalendar = async () => {
-        const data = allDailyData[editingDate] || { cal: 0, pro: 0, weight: 0 };
-        monthData[editingDate] = {
-            cal: Math.round(data.cal),
-            pro: parseFloat(data.pro.toFixed(1)),
-            weight: data.weight || 0
-        };
-        await syncToDB();
-        const btn = document.getElementById('settleBtn');
-        btn.textContent = '✅ 儲存成功！';
-        btn.style.background = 'var(--color-success)';
-        btn.style.color = 'white';
-        setTimeout(() => { btn.textContent = '立即儲存紀錄 💾'; btn.style.background = ''; btn.style.color = ''; }, 1500);
-        if (editingDate !== todayDateStr) window.switchToDate(todayDateStr);
-        else renderCalendar();
-    };
 
     function renderCalendar() {
+        computeStreak();
         const grid = document.getElementById('calendarGrid');
         grid.innerHTML = ['日','一','二','三','四','五','六'].map(d => `<div class="weekday">${d}</div>`).join('');
         const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
@@ -1763,11 +2234,14 @@
                 dateStr === todayDateStr  ? 'today'          : '',
                 dateStr === editingDate   ? 'editing-target' : ''
             ].filter(Boolean).join(' ');
+            const _wdDay = workoutData[dateStr];
+            const hasWorkout = (_wdDay?.exercises?.length > 0) || (_wdDay?.parts?.length > 0);
             const dayData = data ? `
                 <div class="day-data">
-                    ${data.cal    ? `<div class="cal">🔥${data.cal}</div><div class="pro">💪${data.pro}g</div>` : ''}
-                    ${data.weight ? `<div class="weight">⚖️${data.weight}kg</div>` : ''}
-                </div>` : '';
+                    ${data.cal    ? `<div class="cal">🔥${data.cal}</div><div class="pro">💪${data.pro}</div>` : ''}
+                    ${data.weight ? `<div class="weight">⚖️${data.weight}</div>` : ''}
+                    ${hasWorkout  ? `<div class="workout-dot">🏋️</div>` : ''}
+                </div>` : (hasWorkout ? `<div class="day-data"><div class="workout-dot">🏋️</div></div>` : '');
             cell.innerHTML = `
                 <div class="date-num">${d}</div>
                 ${dayData}
@@ -1870,6 +2344,20 @@
         } else {
             document.getElementById('avgCal').innerText = '--';
             document.getElementById('avgPro').innerText = '--';
+        }
+
+        // Achievement days
+        let achieveDays = 0;
+        if (myTargets.tdee > 0 && validDays > 0) {
+            rawCal.forEach(c => {
+                if (c >= myTargets.tdee * 0.9 && c <= myTargets.tdee * 1.1) achieveDays++;
+            });
+        }
+        const achieveEl  = document.getElementById('achieveDays');
+        const achieveSub = document.getElementById('achieveSub');
+        if (achieveEl) {
+            achieveEl.innerText = validDays > 0 ? `${achieveDays} / ${validDays}` : '--';
+            if (achieveSub) achieveSub.innerText = `達成天數（目標 ±10%）`;
         }
 
         const validWeights = weightData.filter(w => w !== null);
