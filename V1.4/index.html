@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>健康日誌 V1.5</title>
+    <title>健康日誌 V1.4</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -700,59 +700,21 @@
         .wo-part-name { font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--color-workout); }
         .wo-exercises { padding: var(--space-3) var(--space-4); }
 
-        /* Column labels — 4-col: name | weight+unit | rm | actions */
+        /* Column labels — 4-col: name | weight+unit | rm | del */
         .wo-col-labels {
-            display: grid; grid-template-columns: minmax(0,1fr) 96px 64px 56px;
+            display: grid; grid-template-columns: minmax(0,1fr) 96px 64px 28px;
             gap: var(--space-2); padding: 0 0 var(--space-1);
         }
         .wo-col-label { font-size: 9px; color: var(--color-text-muted); font-weight: var(--font-bold); text-transform: uppercase; letter-spacing: .04em; }
 
         /* Existing exercise row (inline editing) */
         .wo-ex-row {
-            display: grid; grid-template-columns: minmax(0,1fr) 96px 64px 56px;
+            display: grid; grid-template-columns: minmax(0,1fr) 96px 64px 28px;
             gap: var(--space-2); align-items: center;
             padding: var(--space-1); margin-bottom: var(--space-1);
             background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.8);
             border-radius: var(--radius-md);
         }
-
-        /* Row action buttons container */
-        .wo-row-actions { display: flex; gap: 3px; align-items: center; }
-
-        /* Update-to-menu button */
-        .wo-upd-btn {
-            flex-shrink: 0; padding: 0; width: 24px; height: 28px;
-            background: rgba(140,184,160,.18); border: 1.5px solid rgba(140,184,160,.45);
-            border-radius: var(--radius-md); font-size: 12px; font-weight: var(--font-bold);
-            color: var(--color-pro); cursor: pointer; text-align: center;
-            transition: all var(--transition-fast); font-family: var(--font-family); line-height: 1;
-        }
-        .wo-upd-btn:hover { background: rgba(140,184,160,.4); opacity: 1; }
-
-        /* Cardio log entry row */
-        .cardio-entry-row {
-            display: flex; align-items: center; gap: var(--space-2);
-            padding: var(--space-2) var(--space-3); margin-bottom: var(--space-1);
-            background: rgba(140,184,160,.1); border: 1px solid rgba(140,184,160,.3);
-            border-radius: var(--radius-md); font-size: var(--text-sm);
-        }
-        .cardio-entry-name { font-weight: var(--font-bold); color: var(--color-pro); flex-shrink: 0; }
-        .cardio-entry-stats { flex: 1; color: var(--color-text-secondary); font-size: var(--text-xs); }
-        .cardio-menu-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: var(--space-2) var(--space-3); margin-bottom: var(--space-1);
-            background: rgba(140,184,160,.08); border: 1px solid rgba(140,184,160,.25);
-            border-radius: var(--radius-md); font-size: var(--text-sm);
-        }
-
-        /* Inline group selector popup (appears below an exercise row) */
-        .wo-group-sel-popup {
-            display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
-            padding: var(--space-2) var(--space-3); margin-bottom: var(--space-1);
-            background: rgba(140,184,160,.1); border: 1px solid rgba(140,184,160,.35);
-            border-radius: var(--radius-md); font-size: var(--text-xs);
-        }
-        .wo-group-sel-popup select { width: auto !important; flex: 1; min-width: 80px; }
         /* Weight cell: [number-input flex:1] + [unit-toggle 30px] */
         .wo-weight-cell { display: flex; gap: 3px; align-items: stretch; min-width: 0; }
         .wo-weight-cell .wo-ex-input { flex: 1; min-width: 0; }
@@ -1244,13 +1206,6 @@
                 </div>
             </div>
 
-            <!-- Plan Name -->
-            <div class="input-group" style="margin-bottom:var(--space-3);">
-                <label style="color:var(--color-workout);">📋 訓練計劃名稱（選填）</label>
-                <input type="text" id="woPlanName" placeholder="例：胸日、腿日、推A..."
-                    oninput="updatePlanName(this.value)">
-            </div>
-
             <!-- Quick-select from menu (hidden until menu exists) -->
             <div class="input-group" id="woQuickSection" style="display:none;">
                 <label>快速選擇菜單</label>
@@ -1291,40 +1246,6 @@
                 <div id="woExerciseList"></div>
             </div>
             <div class="wo-volume-summary" id="woVolumeSummary" style="display:none;margin-top:var(--space-3);"></div>
-
-            <!-- Cardio Section -->
-            <div class="compact-card" style="margin-top:var(--space-3);" id="woCardioSection">
-                <div class="compact-card-title" style="color:var(--color-pro);">🏃 有氧紀錄</div>
-
-                <!-- Quick-select from cardio menu (hidden until menu exists) -->
-                <div id="woCardioQuickSection" style="display:none;margin-bottom:var(--space-3);">
-                    <label>快速選擇有氧項目</label>
-                    <select id="woCardioMenuSel" onchange="woCardioAutoFill()"></select>
-                </div>
-
-                <div class="input-group">
-                    <label>有氧項目名稱</label>
-                    <input type="text" id="woCardioName" placeholder="例：跑步、游泳、騎腳踏車">
-                </div>
-                <div class="row">
-                    <div>
-                        <label>平均心率 (bpm)</label>
-                        <input type="number" id="woCardioAvgHR" placeholder="0" min="0" max="250">
-                    </div>
-                    <div>
-                        <label>最高心率 (bpm)</label>
-                        <input type="number" id="woCardioMaxHR" placeholder="0" min="0" max="250">
-                    </div>
-                    <div>
-                        <label>持續時間 (h)</label>
-                        <input type="number" id="woCardioDuration" placeholder="0" step=".1" min="0">
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-full" onclick="addCardioEntry()" style="background:var(--color-pro);border-color:var(--color-pro);">加入有氧 ＋</button>
-
-                <!-- Today's cardio list -->
-                <div id="woCardioList" style="margin-top:var(--space-3);"></div>
-            </div>
         </div>
 
         <!-- ── MANAGE MODE ── -->
@@ -1365,16 +1286,6 @@
                     </div>
                 </div>
                 <button class="btn btn-primary btn-full btn-sm" onclick="saveToWorkoutMenu()" style="background:var(--color-workout);border-color:var(--color-workout);">儲存到清單 ＋</button>
-            </div>
-
-            <!-- Cardio Menu Management -->
-            <div class="compact-card" style="border:1px solid rgba(140,184,160,.45);background:rgba(140,184,160,.05);">
-                <div class="compact-card-title" style="color:var(--color-pro);">🏃 有氧菜單管理</div>
-                <div style="display:flex;gap:var(--space-3);">
-                    <input type="text" id="woCardioMenuName" placeholder="有氧項目名稱（例：跑步、游泳、騎腳踏車）" style="flex:1;">
-                    <button class="btn btn-primary btn-sm" onclick="addCardioMenuItem()" style="background:var(--color-pro);border-color:var(--color-pro);flex-shrink:0;">新增</button>
-                </div>
-                <div id="woCardioMenuList" style="margin-top:var(--space-3);"></div>
             </div>
 
             <button class="btn btn-ghost btn-sm" onclick="toggleWorkoutMode('record')" style="margin-bottom:var(--space-3);">← 返回訓練記錄</button>
@@ -1468,7 +1379,6 @@
     let customMenu = {};
     let workoutData = {};    // { dateStr: { parts: [{ name, exercises:[{name,weight,unit,rm}] }] } }
     let workoutMenu = {};    // { groupName: [{ name, weight, unit, rm }] }
-    let cardioMenu  = [];    // [name, name, ...] simple list of cardio exercise names
     let isDataLoaded = false;
     let myChart = null;
     let activeQuickBtn = null;
@@ -1682,7 +1592,6 @@
                 customMenu       = d.customMenu      || {};
                 workoutData      = d.workoutData     || {};
                 workoutMenu      = d.workoutMenu     || {};
-                cardioMenu       = d.cardioMenu      || [];
             } else {
                 myTargets = { tdee: 0, pro: 0 }; allDailyData = {}; monthData = {}; customMenu = {}; workoutData = {}; workoutMenu = {};
             }
@@ -1703,7 +1612,7 @@
         }
         try {
             await setDoc(doc(db, 'users', currentUserUID), {
-                targets: myTargets, allDailyData, monthData, customMenu, workoutData, workoutMenu, cardioMenu
+                targets: myTargets, allDailyData, monthData, customMenu, workoutData, workoutMenu
             }, { merge: true });
             showSyncStatus();
         } catch (err) {
@@ -1763,30 +1672,21 @@
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${workoutYear}-${workoutMonth}-${d}`;
             const dayData = workoutData[dateStr];
-            const exArr    = dayData?.exercises || (dayData?.parts || []).flatMap(p => p.exercises || []);
-            const hasEx    = exArr.length > 0;
-            const cardio   = dayData?.cardio;
-            const cardioArr = Array.isArray(cardio) ? cardio : (cardio ? [cardio] : []);
-            const totalCardioDur = cardioArr.reduce((s, c) => s + (parseFloat(c.duration) || 0), 0);
-            const hasCardio = totalCardioDur > 0;
-            const planName  = dayData?.planName || '';
+            const exArr  = dayData?.exercises || (dayData?.parts || []).flatMap(p => p.exercises || []);
+            const hasEx  = exArr.length > 0;
             const cell = document.createElement('div');
             cell.className = [
                 'day-cell',
-                (hasEx || hasCardio)           ? 'has-data'       : '',
+                hasEx                          ? 'has-data'       : '',
                 dateStr === todayDateStr       ? 'today'          : '',
                 dateStr === workoutEditingDate ? 'editing-target' : ''
             ].filter(Boolean).join(' ');
             const vol = hasEx ? calcDayVolume(dateStr) : 0;
             let inner = `<div class="date-num">${d}</div>`;
-            if (hasEx || hasCardio) {
+            if (hasEx) {
                 inner += `<div class="day-data wo-cell-parts">`;
-                if (planName) inner += `<div class="wo-cell-part" style="color:var(--color-workout);font-size:8px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${planName}</div>`;
-                if (hasEx) {
-                    inner += `<div class="wo-cell-part">🏋️ ${exArr.length}s</div>`;
-                    if (vol > 0) inner += `<div class="wo-cell-part" style="color:var(--color-text-muted);">${vol >= 1000 ? (vol/1000).toFixed(1)+'k' : vol}kg</div>`;
-                }
-                if (hasCardio) inner += `<div class="wo-cell-part" style="color:var(--color-pro);">🏃${totalCardioDur % 1 === 0 ? totalCardioDur : totalCardioDur.toFixed(1)}h</div>`;
+                inner += `<div class="wo-cell-part">🏋️ ${exArr.length}s</div>`;
+                if (vol > 0) inner += `<div class="wo-cell-part" style="color:var(--color-text-muted);">${vol >= 1000 ? (vol/1000).toFixed(1)+'k' : vol}kg</div>`;
                 inner += `</div>`;
             }
             inner += `<div class="cell-btns"><button class="mini-btn mini-btn-edit" onclick="switchToWorkoutDate('${dateStr}')">📝</button></div>`;
@@ -1803,10 +1703,6 @@
         const exercises = rawData?.exercises
             || (rawData?.parts || []).flatMap(p => p.exercises || []);
 
-        // populate plan name field
-        const planNameEl = document.getElementById('woPlanName');
-        if (planNameEl) planNameEl.value = rawData?.planName || '';
-
         const volEl = document.getElementById('woVolumeSummary');
 
         if (!exercises || exercises.length === 0) {
@@ -1818,7 +1714,6 @@
                 </div>`;
             if (volEl) volEl.style.display = 'none';
             updateWoQuickSelects();
-            renderWorkoutCardioPanel(dateStr);
             return;
         }
 
@@ -1851,10 +1746,7 @@
                     <input class="wo-ex-input" type="number" step="1"
                         value="${rVal}" placeholder="0"
                         oninput="updateWorkoutEx('${dateStr}',${exIdx},'rm',this.value)">
-                    <div class="wo-row-actions">
-                        <button class="wo-upd-btn" onclick="updateExToMenu('${dateStr}',${exIdx})" title="更新到菜單">↑</button>
-                        <button class="wo-del-btn" onclick="deleteWorkoutEx('${dateStr}',${exIdx})">✕</button>
-                    </div>
+                    <button class="wo-del-btn" onclick="deleteWorkoutEx('${dateStr}',${exIdx})">✕</button>
                 </div>`;
         });
         listEl.innerHTML = html;
@@ -1871,7 +1763,6 @@
         }
 
         updateWoQuickSelects();
-        renderWorkoutCardioPanel(dateStr);
     }
 
     // ── Volume calculation (lb auto-converted to kg) ──
@@ -1934,12 +1825,7 @@
         const exercises = workoutData[dateStr]?.exercises;
         if (!exercises) return;
         exercises.splice(exIdx, 1);
-        if (exercises.length === 0) {
-            const hasPlan   = !!workoutData[dateStr]?.planName;
-            const cardioArr = workoutData[dateStr]?.cardio;
-            const hasCardio = Array.isArray(cardioArr) ? cardioArr.length > 0 : !!cardioArr;
-            if (!hasPlan && !hasCardio) delete workoutData[dateStr];
-        }
+        if (exercises.length === 0) delete workoutData[dateStr];
         await syncToDB();
         renderWorkoutCalendar();
         renderWorkoutPanel(dateStr);
@@ -1968,209 +1854,13 @@
         }
     }
 
-    // ── Plan Name ──
-    window.updatePlanName = async (val) => {
-        const dateStr = workoutEditingDate;
-        if (val.trim()) {
-            if (!workoutData[dateStr]) workoutData[dateStr] = { exercises: [] };
-            workoutData[dateStr].planName = val.trim();
-        } else {
-            if (workoutData[dateStr]) {
-                delete workoutData[dateStr].planName;
-                const exLen = workoutData[dateStr].exercises?.length || 0;
-                const cArr2 = workoutData[dateStr].cardio;
-                const hasCardio = Array.isArray(cArr2) ? cArr2.length > 0 : !!cArr2;
-                if (!exLen && !hasCardio) delete workoutData[dateStr];
-            }
-        }
-        await syncToDB();
-        renderWorkoutCalendar();
-    };
-
-    // ── Update exercise back to workout menu ──
-    window.updateExToMenu = async (dateStr, exIdx) => {
-        const ex = workoutData[dateStr]?.exercises?.[exIdx];
-        if (!ex) return;
-        const matches = [];
-        for (const [g, items] of Object.entries(workoutMenu)) {
-            const idx = items.findIndex(item => item.name === ex.name);
-            if (idx !== -1) matches.push({ g, idx });
-        }
-        if (matches.length === 1) {
-            const { g, idx } = matches[0];
-            workoutMenu[g][idx] = { ...workoutMenu[g][idx], weight: ex.weight, unit: ex.unit || 'kg', rm: ex.rm };
-            await syncToDB();
-            showWorkoutSyncStatus();
-            updateWoQuickSelects();
-        } else {
-            showWoInlineGroupSelector(dateStr, exIdx, matches);
-        }
-    };
-
-    function showWoInlineGroupSelector(dateStr, exIdx, existingMatches) {
-        const old = document.getElementById('woInlineGroupSel');
-        if (old) old.remove();
-        const rows = document.querySelectorAll('#woExerciseList .wo-ex-row');
-        const targetRow = rows[exIdx];
-        if (!targetRow) return;
-        const groups = Object.keys(workoutMenu);
-        if (groups.length === 0) { alert('尚無菜單群組，請先在菜單管理中建立群組。'); return; }
-        const ex = workoutData[dateStr]?.exercises?.[exIdx];
-        const options = groups.map(g => `<option value="${g.replace(/"/g,'&quot;')}">${g}</option>`).join('');
-        const note = existingMatches.length > 1
-            ? `「${ex?.name}」在多個群組中，選擇要更新的群組：`
-            : `「${ex?.name}」不在菜單中，選擇群組加入：`;
-        const selDiv = document.createElement('div');
-        selDiv.id = 'woInlineGroupSel';
-        selDiv.className = 'wo-group-sel-popup';
-        selDiv.innerHTML = `
-            <span style="color:var(--color-text-secondary);">${note}</span>
-            <select id="woInlineGroupSelValue">${options}</select>
-            <button class="btn btn-primary btn-sm" onclick="confirmWoGroupSel('${dateStr}',${exIdx})" style="background:var(--color-workout);border-color:var(--color-workout);">確認</button>
-            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('woInlineGroupSel').remove()">取消</button>`;
-        targetRow.insertAdjacentElement('afterend', selDiv);
-    }
-
-    window.confirmWoGroupSel = async (dateStr, exIdx) => {
-        const g = document.getElementById('woInlineGroupSelValue')?.value;
-        if (!g) return;
-        const ex = workoutData[dateStr]?.exercises?.[exIdx];
-        if (!ex) return;
-        if (!workoutMenu[g]) workoutMenu[g] = [];
-        const existIdx = workoutMenu[g].findIndex(item => item.name === ex.name);
-        if (existIdx !== -1) {
-            workoutMenu[g][existIdx] = { ...workoutMenu[g][existIdx], weight: ex.weight, unit: ex.unit || 'kg', rm: ex.rm };
-        } else {
-            workoutMenu[g].push({ name: ex.name, weight: ex.weight, unit: ex.unit || 'kg', rm: ex.rm });
-        }
-        await syncToDB();
-        showWorkoutSyncStatus();
-        document.getElementById('woInlineGroupSel')?.remove();
-        updateWoQuickSelects();
-    };
-
-    // ── Cardio Menu Management ──
-    window.addCardioMenuItem = async () => {
-        const nameEl = document.getElementById('woCardioMenuName');
-        const name = nameEl ? nameEl.value.trim() : '';
-        if (!name) { alert('請輸入有氧項目名稱！'); return; }
-        if (cardioMenu.includes(name)) { alert('此項目已存在！'); return; }
-        cardioMenu.push(name);
-        await syncToDB();
-        if (nameEl) nameEl.value = '';
-        renderCardioMenuManage();
-        updateWoCardioQuickSel();
-    };
-
-    window.deleteCardioMenuItem = async (idx) => {
-        cardioMenu.splice(idx, 1);
-        await syncToDB();
-        renderCardioMenuManage();
-        updateWoCardioQuickSel();
-    };
-
-    function renderCardioMenuManage() {
-        const listEl = document.getElementById('woCardioMenuList');
-        if (!listEl) return;
-        if (cardioMenu.length === 0) {
-            listEl.innerHTML = `<div style="font-size:var(--text-xs);color:var(--color-text-muted);padding:var(--space-2) 0;">尚無有氧項目，請在上方新增</div>`;
-            return;
-        }
-        listEl.innerHTML = cardioMenu.map((name, idx) => `
-            <div class="cardio-menu-item">
-                <span>🏃 ${name}</span>
-                <button class="btn btn-danger-ghost btn-sm" onclick="deleteCardioMenuItem(${idx})" style="padding:2px 6px;">✕</button>
-            </div>`).join('');
-    }
-
-    function updateWoCardioQuickSel() {
-        const sec = document.getElementById('woCardioQuickSection');
-        const sel = document.getElementById('woCardioMenuSel');
-        if (!sec || !sel) return;
-        if (cardioMenu.length === 0) { sec.style.display = 'none'; return; }
-        sec.style.display = 'block';
-        sel.innerHTML = '<option value="">-- 選擇有氧項目 --</option>' +
-            cardioMenu.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
-    }
-
-    window.woCardioAutoFill = () => {
-        const sel    = document.getElementById('woCardioMenuSel');
-        const nameEl = document.getElementById('woCardioName');
-        if (sel && nameEl && sel.value) nameEl.value = sel.value;
-    };
-
-    // ── Cardio Recording (array-based) ──
-    window.addCardioEntry = async () => {
-        const name     = document.getElementById('woCardioName')?.value.trim() || '';
-        const avgHR    = parseInt(document.getElementById('woCardioAvgHR')?.value)    || 0;
-        const maxHR    = parseInt(document.getElementById('woCardioMaxHR')?.value)    || 0;
-        const duration = parseFloat(document.getElementById('woCardioDuration')?.value) || 0;
-        if (!name)     { alert('請輸入有氧項目名稱！'); return; }
-        if (!duration) { alert('請輸入持續時間！'); return; }
-        const dateStr = workoutEditingDate;
-        if (!workoutData[dateStr]) workoutData[dateStr] = { exercises: [] };
-        if (!Array.isArray(workoutData[dateStr].cardio)) workoutData[dateStr].cardio = [];
-        workoutData[dateStr].cardio.push({ name, avgHR, maxHR, duration });
-        await syncToDB();
-        showWorkoutSyncStatus();
-        // clear inputs except name (keep for quick consecutive entry)
-        const avgEl = document.getElementById('woCardioAvgHR');
-        const maxEl = document.getElementById('woCardioMaxHR');
-        const durEl = document.getElementById('woCardioDuration');
-        if (avgEl) avgEl.value = '';
-        if (maxEl) maxEl.value = '';
-        if (durEl) durEl.value = '';
-        renderWorkoutCalendar();
-        renderWorkoutCardioPanel(dateStr);
-    };
-
-    window.deleteCardioEntry = async (dateStr, idx) => {
-        const arr = workoutData[dateStr]?.cardio;
-        if (!Array.isArray(arr)) return;
-        arr.splice(idx, 1);
-        if (arr.length === 0) {
-            delete workoutData[dateStr].cardio;
-            const exLen  = workoutData[dateStr].exercises?.length || 0;
-            const hasPlan = !!workoutData[dateStr].planName;
-            if (!exLen && !hasPlan) delete workoutData[dateStr];
-        }
-        await syncToDB();
-        renderWorkoutCalendar();
-        renderWorkoutCardioPanel(dateStr);
-    };
-
-    function renderWorkoutCardioPanel(dateStr) {
-        const rawCardio = workoutData[dateStr]?.cardio;
-        // support legacy single-entry format
-        const entries = Array.isArray(rawCardio) ? rawCardio : (rawCardio ? [rawCardio] : []);
-        const listEl = document.getElementById('woCardioList');
-        if (!listEl) return;
-        updateWoCardioQuickSel();
-        if (entries.length === 0) {
-            listEl.innerHTML = '';
-            return;
-        }
-        listEl.innerHTML = entries.map((c, i) => {
-            const stats = [];
-            if (c.avgHR) stats.push(`平均 ${c.avgHR} bpm`);
-            if (c.maxHR) stats.push(`最高 ${c.maxHR} bpm`);
-            stats.push(`${c.duration} h`);
-            return `
-            <div class="cardio-entry-row">
-                <span class="cardio-entry-name">🏃 ${c.name || '有氧'}</span>
-                <span class="cardio-entry-stats">${stats.join('　·　')}</span>
-                <button class="wo-del-btn" onclick="deleteCardioEntry('${dateStr}',${i})">✕</button>
-            </div>`;
-        }).join('');
-    }
-
     // ── Workout Menu Management ──
     window.toggleWorkoutMode = (mode) => {
         const rec = document.getElementById('woRecordUI');
         const mgr = document.getElementById('woManageUI');
         if (mode === 'manage') {
             if (rec) rec.style.display = 'none';
-            if (mgr) { mgr.style.display = 'block'; renderWorkoutManage(); renderCardioMenuManage(); }
+            if (mgr) { mgr.style.display = 'block'; renderWorkoutManage(); }
         } else {
             if (rec) rec.style.display = 'block';
             if (mgr) mgr.style.display = 'none';
