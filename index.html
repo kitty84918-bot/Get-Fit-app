@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>健康日誌 V1.5</title>
+    <title>健康日誌 V1.6</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -1315,9 +1315,14 @@
                         <label>最高心率 (bpm)</label>
                         <input type="number" id="woCardioMaxHR" placeholder="0" min="0" max="250">
                     </div>
-                    <div>
-                        <label>持續時間 (h)</label>
-                        <input type="number" id="woCardioDuration" placeholder="0" step=".1" min="0">
+                </div>
+                <div class="input-group">
+                    <label>持續時間</label>
+                    <div style="display:flex;gap:var(--space-2);align-items:center;max-width:240px;">
+                        <input type="number" id="woCardioDurH" placeholder="0" min="0" style="flex:1;min-width:0;">
+                        <span style="font-size:var(--text-sm);color:var(--color-text-secondary);flex-shrink:0;font-weight:var(--font-bold);">h</span>
+                        <input type="number" id="woCardioDurM" placeholder="0" min="0" max="59" style="flex:1;min-width:0;">
+                        <span style="font-size:var(--text-sm);color:var(--color-text-secondary);flex-shrink:0;font-weight:var(--font-bold);">m</span>
                     </div>
                 </div>
                 <button class="btn btn-primary btn-full" onclick="addCardioEntry()" style="background:var(--color-pro);border-color:var(--color-pro);">加入有氧 ＋</button>
@@ -1786,7 +1791,7 @@
                     inner += `<div class="wo-cell-part">🏋️ ${exArr.length}s</div>`;
                     if (vol > 0) inner += `<div class="wo-cell-part" style="color:var(--color-text-muted);">${vol >= 1000 ? (vol/1000).toFixed(1)+'k' : vol}kg</div>`;
                 }
-                if (hasCardio) inner += `<div class="wo-cell-part" style="color:var(--color-pro);">🏃${totalCardioDur % 1 === 0 ? totalCardioDur : totalCardioDur.toFixed(1)}h</div>`;
+                if (hasCardio) inner += `<div class="wo-cell-part" style="color:var(--color-pro);">🏃${formatCalDuration(totalCardioDur)}</div>`;
                 inner += `</div>`;
             }
             inner += `<div class="cell-btns"><button class="mini-btn mini-btn-edit" onclick="switchToWorkoutDate('${dateStr}')">📝</button></div>`;
@@ -2101,10 +2106,12 @@
 
     // ── Cardio Recording (array-based) ──
     window.addCardioEntry = async () => {
-        const name     = document.getElementById('woCardioName')?.value.trim() || '';
-        const avgHR    = parseInt(document.getElementById('woCardioAvgHR')?.value)    || 0;
-        const maxHR    = parseInt(document.getElementById('woCardioMaxHR')?.value)    || 0;
-        const duration = parseFloat(document.getElementById('woCardioDuration')?.value) || 0;
+        const name  = document.getElementById('woCardioName')?.value.trim() || '';
+        const avgHR = parseInt(document.getElementById('woCardioAvgHR')?.value) || 0;
+        const maxHR = parseInt(document.getElementById('woCardioMaxHR')?.value) || 0;
+        const durH  = parseInt(document.getElementById('woCardioDurH')?.value)  || 0;
+        const durM  = parseInt(document.getElementById('woCardioDurM')?.value)  || 0;
+        const duration = Math.round((durH + durM / 60) * 100) / 100; // store as hours (2 decimal)
         if (!name)     { alert('請輸入有氧項目名稱！'); return; }
         if (!duration) { alert('請輸入持續時間！'); return; }
         const dateStr = workoutEditingDate;
@@ -2114,12 +2121,14 @@
         await syncToDB();
         showWorkoutSyncStatus();
         // clear inputs except name (keep for quick consecutive entry)
-        const avgEl = document.getElementById('woCardioAvgHR');
-        const maxEl = document.getElementById('woCardioMaxHR');
-        const durEl = document.getElementById('woCardioDuration');
-        if (avgEl) avgEl.value = '';
-        if (maxEl) maxEl.value = '';
-        if (durEl) durEl.value = '';
+        const avgEl  = document.getElementById('woCardioAvgHR');
+        const maxEl  = document.getElementById('woCardioMaxHR');
+        const durHEl = document.getElementById('woCardioDurH');
+        const durMEl = document.getElementById('woCardioDurM');
+        if (avgEl)  avgEl.value  = '';
+        if (maxEl)  maxEl.value  = '';
+        if (durHEl) durHEl.value = '';
+        if (durMEl) durMEl.value = '';
         renderWorkoutCalendar();
         renderWorkoutCardioPanel(dateStr);
     };
@@ -2139,6 +2148,21 @@
         renderWorkoutCardioPanel(dateStr);
     };
 
+    // Convert decimal hours → "Xh Ym" display string
+    function formatDuration(h) {
+        const hours = Math.floor(h);
+        const mins  = Math.round((h - hours) * 60);
+        if (hours && mins) return `${hours}h ${mins}m`;
+        if (hours)         return `${hours}h`;
+        return `${mins}m`;
+    }
+
+    // Convert decimal hours → calendar short display (e.g. 1.5 → "1.5h", 2 → "2h")
+    function formatCalDuration(h) {
+        const rounded = Math.round(h * 10) / 10;
+        return `${rounded}h`;
+    }
+
     function renderWorkoutCardioPanel(dateStr) {
         const rawCardio = workoutData[dateStr]?.cardio;
         // support legacy single-entry format
@@ -2154,7 +2178,7 @@
             const stats = [];
             if (c.avgHR) stats.push(`平均 ${c.avgHR} bpm`);
             if (c.maxHR) stats.push(`最高 ${c.maxHR} bpm`);
-            stats.push(`${c.duration} h`);
+            stats.push(formatDuration(c.duration || 0));
             return `
             <div class="cardio-entry-row">
                 <span class="cardio-entry-name">🏃 ${c.name || '有氧'}</span>
