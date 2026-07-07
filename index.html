@@ -1184,7 +1184,7 @@
                     <button class="ai-photo-btn" id="aiNameBtn" onclick="analyzeFoodByName()" title="AI 依名稱分析熱量與蛋白質">✨</button>
                     <button class="ai-photo-btn" id="aiSettingsBtn" onclick="toggleAiSettings()" title="AI 設定（管理者）" style="width:34px;display:none;">⚙️</button>
                 </div>
-                <input type="file" id="foodPhotoInput" accept="image/*" capture="environment"
+                <input type="file" id="foodPhotoInput" accept="image/*"
                     style="display:none;" onchange="analyzeFoodPhoto(this.files[0])">
                 <div id="aiPhotoStatus" style="display:none;font-size:var(--text-xs);margin-top:var(--space-1);color:var(--color-text-secondary);"></div>
                 <!-- Admin-only AI settings panel -->
